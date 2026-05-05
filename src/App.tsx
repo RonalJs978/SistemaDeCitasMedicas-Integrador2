@@ -2,26 +2,27 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { Navbar, Sidebar } from './components'
-import { ProtectedRoute } from './components/ProtectedRoute'
 import Login from './pages/Login'
+import {ProtectedRoute} from './components/ProtectedRoute'
 
 // Pacientes
 import PatientSchedule from './pages/patient/Schedule'
-import PatientHistory from './pages/patient/History'
-import PatientExams from './pages/patient/Exams'
-import PatientSupport from './pages/patient/Support'
+import PatientHistory from './pages/patient/MedicHistory'
+import PatientExams from './pages/patient/Config'
+import PatientSupport from './pages/patient/Suport'
 
 // Doctores
-import DoctorPatients from './pages/doctor/Patients'
-import DoctorAppointments from './pages/doctor/Appointments'
-import DoctorReports from './pages/doctor/Reports'
-import DoctorSettings from './pages/doctor/Settings'
+import DoctorPatients from './pages/doctor/DoctorAvailability'
+import DoctorAppointments from './pages/doctor/AppointmentsCenter'
+import DoctorReports from './pages/doctor/DoctorProfileEdit'
+import DoctorSettings from './pages/doctor/NotificationsCenter'
 
 // Admin
-import AdminDashboard from './pages/admin/Dashboard'
-import AdminUsers from './pages/admin/Users'
-import AdminReports from './pages/admin/Reports'
-import AdminSettings from './pages/admin/Settings'
+import AdminDashboard from './pages/administrator/Dashboard'
+import AdminUsers from './pages/administrator/DoctorList'
+import AdminReports from './pages/administrator/DoctorManager'
+
+
 import SidebarDoctor from './components/SidebarDoctor'
 import SidebarAdmin from './components/SidebarAdmin'
 
@@ -138,14 +139,6 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminReports />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/settings"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminSettings />
               </ProtectedRoute>
             }
           />
