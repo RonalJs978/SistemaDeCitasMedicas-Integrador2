@@ -6,21 +6,21 @@ import Login from './pages/Login'
 import {ProtectedRoute} from './components/ProtectedRoute'
 
 // Pacientes
-import PatientSchedule from './pages/patient/Schedule'
-import PatientHistory from './pages/patient/MedicHistory'
-import PatientExams from './pages/patient/Config'
-import PatientSupport from './pages/patient/Suport'
+import PatientSchedule from './pages/Patient/Schedule'
+import PatientHistory from './pages/Patient/MedicHistory'
+import PatientExams from './pages/Patient/Config'
+import PatientSupport from './pages/Patient/Suport'
 
 // Doctores
-import DoctorAvailability from './pages/doctor/DoctorAvailability'
-import DoctorAppointments from './pages/doctor/AppointmentsCenter'
-import DoctorProfileEdit from './pages/doctor/DoctorProfileEdit'
-import DoctorNotifications from './pages/doctor/NotificationsCenter'
+import DoctorAvailability from './pages/Doctor/DoctorAvailability'
+import DoctorAppointments from './pages/Doctor/AppointmentsCenter'
+import DoctorProfileEdit from './pages/Doctor/DoctorProfileEdit'
+import DoctorNotifications from './pages/Doctor/NotificationsCenter'
 
 // Admin
-import AdminDashboard from './pages/administrator/Dashboard'
-import AdminUsers from './pages/administrator/DoctorList'
-import AdminReports from './pages/administrator/DoctorManager'
+import AdminDashboard from './pages/Administrator/Dashboard'
+import AdminUsers from './pages/Administrator/DoctorList'
+import AdminReports from './pages/Administrator/DoctorManager'
 
 
 import SidebarDoctor from './components/SidebarDoctor'
