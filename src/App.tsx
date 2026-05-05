@@ -12,10 +12,10 @@ import PatientExams from './pages/patient/Config'
 import PatientSupport from './pages/patient/Suport'
 
 // Doctores
-import DoctorPatients from './pages/doctor/DoctorAvailability'
+import DoctorAvailability from './pages/doctor/DoctorAvailability'
 import DoctorAppointments from './pages/doctor/AppointmentsCenter'
-import DoctorReports from './pages/doctor/DoctorProfileEdit'
-import DoctorSettings from './pages/doctor/NotificationsCenter'
+import DoctorProfileEdit from './pages/doctor/DoctorProfileEdit'
+import DoctorNotifications from './pages/doctor/NotificationsCenter'
 
 // Admin
 import AdminDashboard from './pages/administrator/Dashboard'
@@ -85,10 +85,10 @@ function App() {
 
           {/* RUTAS DOCTORES */}
           <Route
-            path="/doctor/patients"
+            path="/doctor/availability"
             element={
               <ProtectedRoute allowedRoles={['doctor']}>
-                <DoctorPatients />
+                <DoctorAvailability />
               </ProtectedRoute>
             }
           />
@@ -101,18 +101,18 @@ function App() {
             }
           />
           <Route
-            path="/doctor/reports"
+            path="/doctor/editprofile"
             element={
               <ProtectedRoute allowedRoles={['doctor']}>
-                <DoctorReports />
+                <DoctorProfileEdit />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/doctor/settings"
+            path="/doctor/notifications"
             element={
               <ProtectedRoute allowedRoles={['doctor']}>
-                <DoctorSettings />
+                <DoctorNotifications />
               </ProtectedRoute>
             }
           />

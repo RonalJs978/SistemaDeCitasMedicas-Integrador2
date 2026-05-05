@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, FileText, LifeBuoy } from 'lucide-react';
+import { CalendarClock, UserRoundPen, BellRing, Hourglass } from 'lucide-react';
 import { useState } from 'react';
 
 interface NavItem {
@@ -10,14 +10,14 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: 'schedule', label: 'Agendar cita', icon: Calendar, path: '/schedule' },
-  { id: 'history', label: 'Historial médico', icon: Clock, path: '/history' },
-  { id: 'exams', label: 'Mis exámenes', icon: FileText, path: '/exams' },
-  { id: 'support', label: 'Soporte', icon: LifeBuoy, path: '/support' },
+  { id: 'appointment', label: 'Centro de citas', icon: CalendarClock, path: '/doctor/appointments' },
+  { id: 'editprofile', label: 'Editar perfil', icon: UserRoundPen, path: '/doctor/editprofile' },
+  { id: 'doctoravailability', label: 'Disponibilidad', icon: Hourglass, path: '/doctor/availability' },
+  { id: 'notifications', label: 'Notificaciones', icon: BellRing, path: '/doctor/notifications' },
 ];
 
 export default function Sidebar() {
-  const [activeItem, setActiveItem] = useState('schedule');
+  const [activeItem, setActiveItem] = useState('appointment');
   const navigate = useNavigate();
 
   return (
