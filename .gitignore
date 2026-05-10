@@ -23,3 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 explain.md
+.env
+.env.local

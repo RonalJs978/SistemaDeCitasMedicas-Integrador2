@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, type UserRole } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import { User } from 'lucide-react';
 
 export default function Login() {

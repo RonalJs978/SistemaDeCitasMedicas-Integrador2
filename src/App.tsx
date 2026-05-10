@@ -3,12 +3,13 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { Navbar, Sidebar } from './components'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import {ProtectedRoute} from './components/ProtectedRoute'
 
 // Pacientes
 import PatientSchedule from './pages/Patient/Schedule'
 import PatientHistory from './pages/Patient/MedicHistory'
-import PatientExams from './pages/Patient/Config'
+import PatientConfig from './pages/Patient/Config'
 import PatientSupport from './pages/Patient/Suport'
 
 // Doctores
@@ -20,25 +21,37 @@ import DoctorNotifications from './pages/Doctor/NotificationsCenter'
 // Admin
 import AdminDashboard from './pages/Administrator/Dashboard'
 import AdminUsers from './pages/Administrator/DoctorList'
-import AdminReports from './pages/Administrator/DoctorManager'
+import AdminReports from './pages/Administrator/DoctorManager' 
 
 
 import SidebarDoctor from './components/SidebarDoctor'
 import SidebarAdmin from './components/SidebarAdmin'
 
 function App() {
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+  </Routes>
+  
   const { isAuthenticated, user } = useAuth()
 
-  // Si no está autenticado, solo mostrar Login
-  if (!isAuthenticated) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    )
-  }
+  // rutas protegidas
+  {isAuthenticated && (
+    <>
+      {/* PACIENTES */}
+      <Route
+        path="/patient/schedule"
+        element={
+          <ProtectedRoute allowedRoles={['patient']}>
+            <PatientSchedule />
+          </ProtectedRoute>
+        }
+      />
+      {
 
+      }
+    </>
+  )}
   return (
     <div className="flex h-screen bg-gray-50">
       <Navbar />
@@ -67,10 +80,10 @@ function App() {
             }
           />
           <Route
-            path="/patient/exams"
+            path="/patient/config"
             element={
               <ProtectedRoute allowedRoles={['patient']}>
-                <PatientExams />
+                <PatientConfig />
               </ProtectedRoute>
             }
           />
@@ -142,9 +155,20 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          <Route
+            path="/register"
+            element={
+              <Register/>
+            }
+          />
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
+
+          <Route 
+            path="/" 
+              element={
+                <Navigate to="/login" replace />} />
+          </Routes>
       </main>
     </div>
   )

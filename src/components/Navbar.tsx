@@ -1,4 +1,4 @@
-import { Bell, User } from 'lucide-react';
+import { Bell, User, BriefcaseMedical } from 'lucide-react';
 
 export default function Navbar() {
   return (
@@ -7,7 +7,7 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">A</span>
+            <span className="text-white font-bold text-lg"><BriefcaseMedical size={20}/></span>
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">AuraHealth</h1>
