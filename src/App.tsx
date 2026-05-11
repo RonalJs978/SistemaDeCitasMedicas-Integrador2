@@ -4,7 +4,7 @@ import { useAuth } from './context/AuthContext'
 import { Navbar, Sidebar } from './components'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import {ProtectedRoute} from './components/ProtectedRoute'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
 // Pacientes
 import PatientSchedule from './pages/Patient/Schedule'
@@ -21,47 +21,38 @@ import DoctorNotifications from './pages/Doctor/NotificationsCenter'
 // Admin
 import AdminDashboard from './pages/Administrator/Dashboard'
 import AdminUsers from './pages/Administrator/DoctorList'
-import AdminReports from './pages/Administrator/DoctorManager' 
-
+import AdminReports from './pages/Administrator/DoctorManager'
 
 import SidebarDoctor from './components/SidebarDoctor'
 import SidebarAdmin from './components/SidebarAdmin'
 
 function App() {
-  <Routes>
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-  </Routes>
-  
   const { isAuthenticated, user } = useAuth()
 
-  // rutas protegidas
-  {isAuthenticated && (
-    <>
-      {/* PACIENTES */}
-      <Route
-        path="/patient/schedule"
-        element={
-          <ProtectedRoute allowedRoles={['patient']}>
-            <PatientSchedule />
-          </ProtectedRoute>
-        }
-      />
-      {
+  // ✅ Rutas públicas: sin Navbar ni Sidebar
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        {/* Cualquier ruta desconocida redirige al login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    )
+  }
 
-      }
-    </>
-  )}
+  // ✅ Rutas protegidas: con layout completo
   return (
     <div className="flex h-screen bg-gray-50">
       <Navbar />
-      
-      {user?.role === 'patient' && <Sidebar/>}
+
+      {user?.role === 'patient' && <Sidebar />}
       {user?.role === 'doctor' && <SidebarDoctor />}
       {user?.role === 'admin' && <SidebarAdmin />}
 
       <main className="flex-1 ml-64 mt-16 p-8">
         <Routes>
+
           {/* RUTAS PACIENTES */}
           <Route
             path="/patient/schedule"
@@ -155,20 +146,22 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
+
+          {/* ✅ Redirige "/" al home según el rol del usuario */}
           <Route
-            path="/register"
+            path="/"
             element={
-              <Register/>
+              user?.role === 'patient' ? <Navigate to="/patient/schedule" replace /> :
+              user?.role === 'doctor'  ? <Navigate to="/doctor/availability" replace /> :
+              user?.role === 'admin'   ? <Navigate to="/admin/dashboard" replace /> :
+              <Navigate to="/login" replace />
             }
           />
 
+          {/* ✅ Cualquier ruta desconocida redirige según rol */}
+          <Route path="*" element={<Navigate to="/" replace />} />
 
-          <Route 
-            path="/" 
-              element={
-                <Navigate to="/login" replace />} />
-          </Routes>
+        </Routes>
       </main>
     </div>
   )
