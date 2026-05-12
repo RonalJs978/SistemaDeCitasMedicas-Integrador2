@@ -10,10 +10,6 @@ export default function DetailForm() {
           className="p-3 rounded-lg bg-gray-100 outline-none"
           placeholder="Email de contacto"
         />
-        <input
-          className="p-3 rounded-lg bg-gray-100 outline-none"
-          placeholder="Email de contacto"
-        />
       </div>
 
       <input

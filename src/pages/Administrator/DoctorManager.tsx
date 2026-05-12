@@ -2,7 +2,7 @@ import ProfileUpload from '../../components/form/ProfileUpload';
 import PersonalInfo from '../../components/form/PersonalInfo';
 import CredentialsUpload from '../../components/form/CredentialUpload';
 import FormActions from '../../components/form/FormAction';
-import DetailForm from '../../components/form/detailform';
+import DetailForm from '../../components/form/DetailForm';
 
 export default function MainContent() {
   return (

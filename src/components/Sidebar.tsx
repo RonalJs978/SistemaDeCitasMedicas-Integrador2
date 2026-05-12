@@ -10,10 +10,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { id: 'schedule', label: 'Agendar cita', icon: Calendar, path: '/schedule' },
-  { id: 'history', label: 'Historial médico', icon: FileText, path: '/history' },
-  { id: 'exams', label: 'Configuracion', icon: Cog, path: '/exams' },
-  { id: 'support', label: 'Soporte', icon: LifeBuoy, path: '/support' },
+  { id: 'schedule', label: 'Agendar cita', icon: Calendar, path: '/patient/schedule' },
+  { id: 'history', label: 'Historial médico', icon: FileText, path: '/patient/history' },
+  { id: 'config', label: 'Configuracion', icon: Cog, path: '/patient/config' },
+  { id: 'support', label: 'Soporte', icon: LifeBuoy, path: '/patient/support' },
 ];
 
 export default function Sidebar() {
