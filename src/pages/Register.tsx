@@ -59,6 +59,7 @@ export default function Register() {
     setLoading(true)
 
     try {
+      // 1. Crear usuario en Supabase Auth
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -71,17 +72,66 @@ export default function Register() {
       })
 
       if (signUpError) {
-        setError(signUpError.message)
+        if (signUpError.message.includes('already registered')) {
+          setError('Este email ya está registrado. Por favor, inicia sesión.')
+        } else {
+          setError(signUpError.message || 'Error al registrarse')
+        }
         return
       }
 
+      if (!data.user?.id) {
+        setError('Error: No se obtuvo el ID del usuario')
+        return
+      }
+
+      // 2. Crear fila en tabla usuarios (o actualizar si existe)
+      const { error: usuariosError } = await supabase
+        .from('usuarios')
+        .upsert([
+          {
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            user_role: userRole
+          }
+        ], { onConflict: 'id' })
+
+      if (usuariosError) {
+        setError(`Error al registrar usuario: ${usuariosError.message}`)
+        console.error('Error en usuarios:', usuariosError)
+        return
+      }
+
+      // 3. Si es paciente, crear fila en tabla pacientes (o actualizar si existe)
+      if (userRole === 'paciente') {
+        const { error: pacientesError } = await supabase
+          .from('pacientes')
+          .upsert([
+            {
+              id: data.user.id,
+              full_name: fullName,
+              email: email
+            }
+          ], { onConflict: 'id' })
+
+        if (pacientesError) {
+          setError(`Error al registrar como paciente: ${pacientesError.message}`)
+          console.error('Error en pacientes:', pacientesError)
+          return
+        }
+      }
+
       console.log('Cuenta creada exitosamente:', data.user)
-      // Opcional: redirigir al usuario o mostrar mensaje de éxito
+      setError('') // Limpiar errores
       setFullName('')
       setEmail('')
       setPassword('')
       setConfirmPassword('')
       setTermsAccepted(false)
+      
+      // Mostrar mensaje de éxito (opcional: redirigir al login)
+      alert('¡Registro exitoso! Por favor, inicia sesión.')
     } catch (err) {
       setError('Error al crear la cuenta. Por favor intenta nuevamente.')
       console.error(err)
@@ -94,12 +144,7 @@ export default function Register() {
     <section className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center py-8 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <a href="/" className="flex items-center justify-center mb-4">
-            <img
-              className="w-10 h-10 mr-2"
-              src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg"
-              alt="logo"
-            />
+          <a href="/login" className="flex items-center justify-center mb-4">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               AuraHealth
             </span>

@@ -2,27 +2,76 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, type UserRole } from '../context/AuthContext'
 import { User } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 // ✅ Importa la imagen correctamente en lugar de usar ruta hardcodeada
 import sidebarImage from '../assets/sidebar_12.png'
 
 export default function Login() {
-  const [role, setRole] = useState<UserRole>('patient')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const { setUser } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    const mockUser = {
-      id: '1',
-      name: 'Usuario Demo',
-      email: email,
-      role: role,
+  const getRoleRoute = (role: string) => {
+    const routes: Record<string, string> = {
+      'admin': '/administrator/dashboard',
+      'doctor': '/doctor/appointments',
+      'paciente': '/patient/schedule'
     }
-    setUser(mockUser)
-    navigate(`/${role}/schedule`)
+    return routes[role] || '/patient/schedule'
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      // 1. Autenticar con Supabase
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (authError) {
+        setError(authError.message || 'Error al iniciar sesión')
+        setLoading(false)
+        return
+      }
+
+      // 2. Obtener el rol desde tabla usuarios
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('user_role')
+        .eq('id', data.user.id)
+        .single()
+
+      if (userError || !userData) {
+        setError('Error al obtener datos del usuario')
+        setLoading(false)
+        return
+      }
+
+      // 3. Guardar en contexto
+      const userRole = userData.user_role as UserRole
+      setUser({
+        id: data.user.id,
+        name: data.user.user_metadata?.full_name || 'Usuario',
+        email: data.user.email || '',
+        role: userRole === 'admin' ? 'admin' : userRole === 'doctor' ? 'doctor' : 'patient'
+      })
+
+      // 4. Redirigir según rol
+      navigate(getRoleRoute(userData.user_role))
+    } catch (err) {
+      setError('Error al iniciar sesión. Por favor intenta nuevamente.')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -48,23 +97,14 @@ export default function Login() {
             <p className="text-sm text-gray-600">Ingrese sus credenciales para poder acceder al sistema</p>
           </div>
 
-          {/* Rol Selector */}
-          <div className="mb-6">
-            {/* ✅ htmlFor vinculado al id del select */}
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-              Selecciona tu rol:
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            >
-              <option value="patient">Paciente</option>
-              <option value="doctor">Doctor</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
 
           {/* Email Input */}
           <div className="mb-4">
@@ -122,9 +162,10 @@ export default function Login() {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition mb-3"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Ingresar
+            {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
 
           <hr />
