@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const determineUserRole = (email: string) => {
-  if (email.endsWith('@adminaura')) return 'admin'
-  if (email.endsWith('@aurahealth')) return 'doctor'
+  if (email.endsWith('@adminaura.com')) return 'admin'
+  if (email.endsWith('@aurahealth.com')) return 'doctor'
   return 'paciente'
 }
 
