@@ -85,7 +85,7 @@ export default function Register() {
         return
       }
 
-      // 2. Crear fila en tabla usuarios (o actualizar si existe)
+      // 2. Crear fila en tabla usuarios
       const { error: usuariosError } = await supabase
         .from('usuarios')
         .upsert([
@@ -101,25 +101,6 @@ export default function Register() {
         setError(`Error al registrar usuario: ${usuariosError.message}`)
         console.error('Error en usuarios:', usuariosError)
         return
-      }
-
-      // 3. Si es paciente, crear fila en tabla pacientes (o actualizar si existe)
-      if (userRole === 'paciente') {
-        const { error: pacientesError } = await supabase
-          .from('pacientes')
-          .upsert([
-            {
-              id: data.user.id,
-              full_name: fullName,
-              email: email
-            }
-          ], { onConflict: 'id' })
-
-        if (pacientesError) {
-          setError(`Error al registrar como paciente: ${pacientesError.message}`)
-          console.error('Error en pacientes:', pacientesError)
-          return
-        }
       }
 
       console.log('Cuenta creada exitosamente:', data.user)
