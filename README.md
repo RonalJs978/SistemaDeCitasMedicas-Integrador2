@@ -1,42 +1,42 @@
-# Appointment System
+# Sistema de Gestión de Citas Médicas
 
-A comprehensive medical appointment management platform designed to streamline the interaction between patients, doctors, and administrators.
+Una plataforma integral de gestión de citas médicas diseñada para optimizar la interacción entre pacientes, doctores y administradores.
 
-## 🎯 Objective
-The goal of this application is to digitize and optimize the scheduling and management of medical appointments, providing a secure and efficient environment for healthcare providers to manage their availability and for patients to manage their medical history and bookings.
+## 🎯 Objetivo
+El objetivo de esta aplicación es digitalizar y optimizar la programación y gestión de citas médicas, proporcionando un entorno seguro y eficiente para que los proveedores de salud gestionen su disponibilidad y los pacientes administren su historial médico y reservas.
 
-## 🛠️ Technologies
+## 🛠️ Tecnologías
 - **Frontend**: React, TypeScript, Vite
-- **Backend & Database**: Supabase (PostgreSQL & Auth)
-- **Styling**: Tailwind CSS (implied by project structure)
-- **State Management**: React Context API (`AuthContext`, `AppointmentContext`)
+- **Backend y Base de Datos**: Supabase (PostgreSQL y Auth)
+- **Estilos**: Tailwind CSS
+- **Gestión de Estado**: React Context API (`AuthContext`, `AppointmentContext`)
 
-## 🏛️ Architecture
-The project follows a modular component-based architecture:
+## 🏛️ Arquitectura
+El proyecto sigue una arquitectura modular basada en componentes:
 
-### 📂 Project Structure
-- `src/pages/`: Divided by user roles for clear separation of concerns:
-  - `/Administrator`: Dashboard and Doctor management.
-  - `/Doctor`: Availability, profile editing, and appointment center.
-  - `/Patient`: Scheduling, medical history, and support.
-- `src/context/`: Global state management for Authentication and Appointments.
-- `src/layout/`: Specialized wrappers (`AdminLayout`, `DoctorLayout`, `PatientLayout`) to maintain consistent UI per role.
-- `src/components/`: Reusable UI elements and specialized form components for uploads and personal info.
-- `src/lib/`: Configuration files for external services (e.g., Supabase client).
-- `src/types/`: Centralized TypeScript definitions for type safety.
+### 📂 Estructura del Proyecto
+- `src/pages/`: Dividido por roles de usuario para una clara separación de responsabilidades:
+  - `/Administrator`: Dashboard y gestión de doctores.
+  - `/Doctor`: Gestión de disponibilidad, edición de perfil y centro de citas.
+  - `/Patient`: Programación de citas, historial médico y soporte.
+- `src/context/`: Gestión de estado global para Autenticación y Citas.
+- `src/layout/`: Envoltorios especializados (`AdminLayout`, `DoctorLayout`, `PatientLayout`) para mantener una UI consistente según el rol.
+- `src/components/`: Elementos de interfaz reutilizables y componentes de formulario especializados para cargas de archivos e información personal.
+- `src/lib/`: Archivos de configuración para servicios externos (ej. cliente de Supabase).
+- `src/types/`: Definiciones centralizadas de TypeScript para garantizar la seguridad de tipos.
 
-## 👥 User Roles & Functionalities
-### 🏥 Patient
-- Schedule and manage medical appointments.
-- Access and maintain medical history.
-- Profile and account configuration.
+## 👥 Roles de Usuario y Funcionalidades
+### 🏥 Paciente
+- Programar y gestionar citas médicas.
+- Acceder y mantener el historial médico.
+- Configuración de perfil y cuenta.
 
 ### 👨‍⚕️ Doctor
-- Manage professional availability and schedules.
-- Access an Appointments Center to track patient visits.
-- Manage professional profile and credentials.
-- Notification center for appointment alerts.
+- Gestionar la disponibilidad profesional y horarios.
+- Centro de Citas para seguimiento de visitas de pacientes.
+- Gestión de perfil profesional y credenciales.
+- Centro de notificaciones para alertas de citas.
 
-### ⚙️ Administrator
-- Centralized Dashboard for system monitoring.
-- Management of the medical staff (Doctor List and Manager).
+### ⚙️ Administrador
+- Panel de control centralizado para el monitoreo del sistema.
+- Gestión del personal médico (Lista y Administrador de Doctores).
