@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# Sistema de Gestión de Citas Médicas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Una plataforma integral de gestión de citas médicas diseñada para optimizar la interacción entre pacientes, doctores y administradores.
 
-Currently, two official plugins are available:
+## 🎯 Objetivo
+El objetivo de esta aplicación es digitalizar y optimizar la programación y gestión de citas médicas, proporcionando un entorno seguro y eficiente para que los proveedores de salud gestionen su disponibilidad y los pacientes administren su historial médico y reservas.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠️ Tecnologías
+- **Frontend**: React, TypeScript, Vite
+- **Backend y Base de Datos**: Supabase (PostgreSQL y Auth)
+- **Estilos**: Tailwind CSS
+- **Gestión de Estado**: React Context API (`AuthContext`, `AppointmentContext`)
 
-## React Compiler
+## 🏛️ Arquitectura
+El proyecto sigue una arquitectura modular basada en componentes:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 📂 Estructura del Proyecto
+- `src/pages/`: Dividido por roles de usuario para una clara separación de responsabilidades:
+  - `/Administrator`: Dashboard y gestión de doctores.
+  - `/Doctor`: Gestión de disponibilidad, edición de perfil y centro de citas.
+  - `/Patient`: Programación de citas, historial médico y soporte.
+- `src/context/`: Gestión de estado global para Autenticación y Citas.
+- `src/layout/`: Envoltorios especializados (`AdminLayout`, `DoctorLayout`, `PatientLayout`) para mantener una UI consistente según el rol.
+- `src/components/`: Elementos de interfaz reutilizables y componentes de formulario especializados para cargas de archivos e información personal.
+- `src/lib/`: Archivos de configuración para servicios externos (ej. cliente de Supabase).
+- `src/types/`: Definiciones centralizadas de TypeScript para garantizar la seguridad de tipos.
 
-## Expanding the ESLint configuration
+## 👥 Roles de Usuario y Funcionalidades
+### 🏥 Paciente
+- Programar y gestionar citas médicas.
+- Acceder y mantener el historial médico.
+- Configuración de perfil y cuenta.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 👨‍⚕️ Doctor
+- Gestionar la disponibilidad profesional y horarios.
+- Centro de Citas para seguimiento de visitas de pacientes.
+- Gestión de perfil profesional y credenciales.
+- Centro de notificaciones para alertas de citas.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### ⚙️ Administrador
+- Panel de control centralizado para el monitoreo del sistema.
+- Gestión del personal médico (Lista y Administrador de Doctores).
