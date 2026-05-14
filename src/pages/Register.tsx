@@ -85,7 +85,7 @@ export default function Register() {
         return
       }
 
-      // 2. Crear fila en tabla usuarios (o actualizar si existe)
+      // 2. Crear fila en tabla usuarios
       const { error: usuariosError } = await supabase
         .from('usuarios')
         .upsert([
@@ -103,7 +103,6 @@ export default function Register() {
         return
       }
 
-      
       console.log('Cuenta creada exitosamente:', data.user)
       setError('') // Limpiar errores
       setFullName('')

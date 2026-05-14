@@ -372,11 +372,6 @@ export default function DoctorManager() {
           </div>
         </div>
 
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            <strong>ℹ️ Flujo automático:</strong> El sistema generará automáticamente un email (@aurahealth.com) y una contraseña temporal para el nuevo doctor.
-          </p>
-        </div>
       </div>
     </main>
   )
