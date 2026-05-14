@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# Appointment System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive medical appointment management platform designed to streamline the interaction between patients, doctors, and administrators.
 
-Currently, two official plugins are available:
+## 🎯 Objective
+The goal of this application is to digitize and optimize the scheduling and management of medical appointments, providing a secure and efficient environment for healthcare providers to manage their availability and for patients to manage their medical history and bookings.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠️ Technologies
+- **Frontend**: React, TypeScript, Vite
+- **Backend & Database**: Supabase (PostgreSQL & Auth)
+- **Styling**: Tailwind CSS (implied by project structure)
+- **State Management**: React Context API (`AuthContext`, `AppointmentContext`)
 
-## React Compiler
+## 🏛️ Architecture
+The project follows a modular component-based architecture:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 📂 Project Structure
+- `src/pages/`: Divided by user roles for clear separation of concerns:
+  - `/Administrator`: Dashboard and Doctor management.
+  - `/Doctor`: Availability, profile editing, and appointment center.
+  - `/Patient`: Scheduling, medical history, and support.
+- `src/context/`: Global state management for Authentication and Appointments.
+- `src/layout/`: Specialized wrappers (`AdminLayout`, `DoctorLayout`, `PatientLayout`) to maintain consistent UI per role.
+- `src/components/`: Reusable UI elements and specialized form components for uploads and personal info.
+- `src/lib/`: Configuration files for external services (e.g., Supabase client).
+- `src/types/`: Centralized TypeScript definitions for type safety.
 
-## Expanding the ESLint configuration
+## 👥 User Roles & Functionalities
+### 🏥 Patient
+- Schedule and manage medical appointments.
+- Access and maintain medical history.
+- Profile and account configuration.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 👨‍⚕️ Doctor
+- Manage professional availability and schedules.
+- Access an Appointments Center to track patient visits.
+- Manage professional profile and credentials.
+- Notification center for appointment alerts.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### ⚙️ Administrator
+- Centralized Dashboard for system monitoring.
+- Management of the medical staff (Doctor List and Manager).
