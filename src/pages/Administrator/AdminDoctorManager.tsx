@@ -7,29 +7,37 @@ interface Especialidad {
   descripcion: string
 }
 
-const determineUserRole = (email: string) => {
-  // Solo doctores con dominio @aurahealth.com
-  if (email.endsWith('@aurahealth.com')) return 'doctor'
-  return null // Rechazar otros dominios
+interface FormData {
+  nombre: string
+  apellido: string
+  dni: string
+  telefono: string
+  especialidad_id: string
+  bio: string
+  is_available: boolean
 }
 
 export default function AdminDoctorManager() {
-  const [fullName, setFullName] = useState('')
-  const [emailPrefix, setEmailPrefix] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [formData, setFormData] = useState<FormData>({
+    nombre: '',
+    apellido: '',
+    dni: '',
+    telefono: '',
+    especialidad_id: '',
+    bio: '',
+    is_available: false
+  })
+  
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState('')
   
   // Especialidades
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([])
-  const [especialidadId, setEspecialidadId] = useState('')
-  const [loadingEspecialidades, setLoadingEspecialidades] = useState(true)
-  const [isAvailable, setIsAvailable] = useState(false)
 
-  const userRole = determineUserRole(`${emailPrefix}@aurahealth.com`)
-  const isValidDoctorEmail = userRole === 'doctor'
+  const [loadingEspecialidades, setLoadingEspecialidades] = useState(true)
+
   
   // Cargar especialidades al montar el componente
   useEffect(() => {
@@ -56,130 +64,84 @@ export default function AdminDoctorManager() {
 
     fetchEspecialidades()
   }, [])
-  
-  const getRoleLabel = (role: string) => {
-    return role === 'doctor' ? 'Doctor' : 'Inválido'
+
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
+  
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
 
-    if (!fullName.trim()) {
-      setError('El nombre completo es requerido')
+    if (!formData.nombre.trim()) {
+      setError('El nombre es requerido')
       return
     }
 
-    if (!emailPrefix.trim()) {
-      setError('El correo electrónico es requerido')
+    if (!formData.apellido.trim()) {
+      setError('El apellido es requerido')
       return
     }
 
-    if (!isValidDoctorEmail) {
-      setError('Por favor, utiliza un correo con dominio @aurahealth.com')
-      return
-    }
-
-    if (!especialidadId) {
+    if (!formData.especialidad_id) {
       setError('Debes seleccionar una especialidad')
       return
     }
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
-      return
-    }
 
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden')
-      return
-    }
-
-    if (!termsAccepted) {
-      setError('Debes aceptar los términos y condiciones')
-      return
-    }
 
     setLoading(true)
 
     try {
-      // 1. Crear usuario en Supabase Auth
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: `${emailPrefix}@aurahealth.com`,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            user_role: 'doctor'
+      // Insertar directamente en tabla doctores
+      const { data, error: insertError } = await supabase
+        .from('doctores')
+        .insert([
+          {
+            nombre: formData.nombre,
+            apellido: formData.apellido,
+            dni: formData.dni || null,
+            telefono: formData.telefono || null,
+            especialidad_id: formData.especialidad_id,
+            bio: formData.bio || null,
+            is_available: formData.is_available,
+            created_at: new Date().toISOString()
           }
-        }
-      })
+        ])
+        .select()
 
-      if (signUpError) {
-        if (signUpError.message.includes('already registered')) {
-          setError('Este email ya está registrado. Por favor, inicia sesión.')
+      if (insertError) {
+        if (insertError.message.includes('unique')) {
+          setError('Este DNI ya está registrado')
         } else {
-          setError(signUpError.message || 'Error al registrarse')
+          setError(`Error: ${insertError.message}`)
         }
+        console.error('Error al registrar doctor:', insertError)
         return
       }
 
-      if (!data.user?.id) {
-        setError('Error: No se obtuvo el ID del usuario')
-        return
-      }
-
-      // 2. Crear fila en tabla usuarios
-      const usuariosResult = await supabase.from('usuarios').upsert([
-        {
-          id: data.user.id,
-          email: `${emailPrefix}@aurahealth.com`,
-          full_name: fullName,
-          user_role: 'doctor'
-        }
-      ], { onConflict: 'id' })
-
-      if (usuariosResult.error) {
-        setError(`Error al registrar usuario: ${usuariosResult.error.message}`)
-        console.error('Error en usuarios:', usuariosResult.error)
-        return
-      }
-
-      // 3. Crear perfil de doctor usando función RPC con SECURITY DEFINER
-      const { data: funcResult, error: funcError } = await supabase.rpc(
-        'create_doctor_profile',
-        {
-          p_usuario_id: data.user.id,
-          p_especialidad_id: especialidadId,
-          p_bio: '',
-          p_is_available: isAvailable
-        }
-      )
-
-      if (funcError) {
-        setError(`Error al crear perfil de doctor: ${funcError.message}`)
-        console.error('Error en función RPC:', funcError)
-        return
-      }
-
-      if (!funcResult || !funcResult[0]?.success) {
-        setError(`Error al crear perfil de doctor: ${funcResult?.[0]?.message || 'Error desconocido'}`)
-        console.error('Error en respuesta RPC:', funcResult)
-        return
-      }
-
-      console.log('Doctor registrado exitosamente:', data.user)
-      setFullName('')
-      setEmailPrefix('')
-      setPassword('')
-      setConfirmPassword('')
-      setEspecialidadId('')
-      setIsAvailable(false)
-      setTermsAccepted(false)
+      console.log('Doctor registrado exitosamente:', data)
+      setSuccessMessage(`¡Doctor ${formData.nombre} ${formData.apellido} registrado correctamente!`)
       
-      alert('¡Doctor registrado exitosamente! Por favor, inicia sesión.')
+      setFormData({
+        nombre: '',
+        apellido: '',
+        dni: '',
+        telefono: '',
+        especialidad_id: '',
+        bio: '',
+        is_available: false
+      })
+      
+      // Limpiar mensaje de éxito después de 3 segundos
+      setTimeout(() => setSuccessMessage(''), 3000)
     } catch (err) {
-      setError('Error al crear la cuenta. Por favor intenta nuevamente.')
+      setError('Error al registrar el doctor. Por favor intenta nuevamente.')
       console.error(err)
     } finally {
       setLoading(false)
@@ -187,180 +149,250 @@ export default function AdminDoctorManager() {
   }
 
   return (
-    <section className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center py-8 px-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <a href="/login" className="flex items-center justify-center mb-4">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              AuraHealth
-            </span>
-          </a>
-        </div>
+    <section className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950 overflow-hidden relative">
+      {/* Ambient background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/30 dark:bg-blue-900/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-200/20 dark:bg-blue-900/10 rounded-full blur-3xl" />
+      </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-8 md:p-10">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Crear cuenta de Doctor
+      <div className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-xl">
+          {/* Header */}
+          <div className="mb-12 text-center animate-fade-in" style={{ animationDuration: '0.6s' }}>
+            <a href="/" className="inline-block mb-6 group">
+              <span className="text-4xl font-black tracking-tight bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 dark:from-blue-400 dark:via-blue-300 dark:to-blue-500 bg-clip-text text-transparent">
+                AuraHealth
+              </span>
+            </a>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white mb-3">
+              Agregar Doctor
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Regístrate como doctor en AuraHealth
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+              Crea un nuevo perfil de doctor en el sistema
             </p>
+          </div>
 
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
-                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm text-red-700 dark:text-red-200">{error}</span>
-              </div>
-            )}
+          {/* Main Form Container */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20  overflow-hidden animate-scale-in" style={{ animationDuration: '0.8s' }}>
+            <div className="grid lg:grid-cols-1">
+              {/* Left Column - Visual */}
+             
 
+              {/* Right Column - Form */}
+              <div className="p-6 md:p-6">
+                {error && (
+                  <div className="mb-4 p-4 bg-red-50/90 dark:bg-red-950/40 border border-red-200/50 dark:border-red-800/50 rounded-xl flex items-start gap-3 animate-slide-down">
+                    <svg className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm font-medium text-red-700 dark:text-red-200">{error}</span>
+                  </div>
+                )}
 
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
-                  placeholder="John Doe Luthor"
-                  required
-                />
-              </div>
+                {successMessage && (
+                  <div className="mb-6 p-4 bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200/50 dark:border-blue-800/50 rounded-xl flex items-start gap-3 animate-slide-down">
+                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-200">{successMessage}</span>
+                  </div>
+                )}
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Correo electrónico
-                </label>
+                <form onSubmit={handleRegister} className="space-y-5">
+                  {/* Name Row */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="group">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">
+                        Nombre
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.nombre}
+                        onChange={(e) => handleInputChange('nombre', e.target.value)}
+                        onFocus={() => setFocusedField('nombre')}
+                        onBlur={() => setFocusedField(null)}
+                        className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 transition-all duration-300 text-slate-900 dark:text-white rounded-xl placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none ${
+                          focusedField === 'nombre' 
+                            ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
+                            : 'border-slate-200 dark:border-slate-600'
+                        }`}
+                        placeholder="Dr. Juan"
+                        required
+                      />
+                    </div>
+                    <div className="group">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">
+                        Apellido
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.apellido}
+                        onChange={(e) => handleInputChange('apellido', e.target.value)}
+                        onFocus={() => setFocusedField('apellido')}
+                        onBlur={() => setFocusedField(null)}
+                        className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 transition-all duration-300 text-slate-900 dark:text-white rounded-xl placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none ${
+                          focusedField === 'apellido' 
+                            ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
+                            : 'border-slate-200 dark:border-slate-600'
+                        }`}
+                        placeholder="Pérez"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-2 mb-2">
-                 <input type="text" name="email" id="email"
-                    value={emailPrefix}
-                    onChange={(e) => setEmailPrefix(e.target.value.replace(/\s/g, '').toLocaleLowerCase())} 
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
-                    placeholder="nombre.apellido"
-                    required
+                  {/* DNI */}
+                  <div className="group">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">
+                      DNI/Cédula
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.dni}
+                      onChange={(e) => handleInputChange('dni', e.target.value)}
+                      onFocus={() => setFocusedField('dni')}
+                      onBlur={() => setFocusedField(null)}
+                      className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 transition-all duration-300 text-slate-900 dark:text-white rounded-xl placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none ${
+                        focusedField === 'dni' 
+                          ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
+                          : 'border-slate-200 dark:border-slate-600'
+                      }`}
+                      placeholder="12345678"
                     />
-                  <span className={`px-4 py-3 bg-gray-100 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg`}>
-                    @aurahealth.com
-                  </span>
-                </div>
+                  </div>
 
+                  {/* Teléfono */}
+                  <div className="group">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">
+                      Teléfono
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.telefono}
+                      onChange={(e) => handleInputChange('telefono', e.target.value)}
+                      onFocus={() => setFocusedField('telefono')}
+                      onBlur={() => setFocusedField(null)}
+                      className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 transition-all duration-300 text-slate-900 dark:text-white rounded-xl placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none ${
+                        focusedField === 'telefono' 
+                          ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
+                          : 'border-slate-200 dark:border-slate-600'
+                      }`}
+                      placeholder="+51 911 323 456"
+                    />
+                  </div>
+
+                  {/* Especialidad */}
+                  <div className="group">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">
+                      Especialidad
+                    </label>
+                    <select
+                      value={formData.especialidad_id}
+                      onChange={(e) => handleInputChange('especialidad_id', e.target.value)}
+                      onFocus={() => setFocusedField('especialidad')}
+                      onBlur={() => setFocusedField(null)}
+                      disabled={loadingEspecialidades}
+                      className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 transition-all duration-300 text-slate-900 dark:text-white rounded-xl appearance-none focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                        focusedField === 'especialidad' 
+                          ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
+                          : 'border-slate-200 dark:border-slate-600'
+                      }`}
+                      required
+                    >
+                      <option value="">
+                        {loadingEspecialidades ? 'Cargando...' : 'Selecciona especialidad'}
+                      </option>
+                      {especialidades.map((esp) => (
+                        <option key={esp.id} value={esp.id}>
+                          {esp.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Bio */}
+                  <div className="group">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest">
+                      Biografía (Opcional)
+                    </label>
+                    <textarea
+                      value={formData.bio}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
+                      onFocus={() => setFocusedField('bio')}
+                      onBlur={() => setFocusedField(null)}
+                      rows={3}
+                      className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-2 transition-all duration-300 text-slate-900 dark:text-white rounded-xl placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none resize-none ${
+                        focusedField === 'bio' 
+                          ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
+                          : 'border-slate-200 dark:border-slate-600'
+                      }`}
+                      placeholder="Cuéntanos sobre tu experiencia y especialización..."
+                    />
+                  </div>
+
+                  {/* Checkboxes */}
+                  <div className="space-y-3 pt-2">
+                    <label className="flex items-center gap-3 cursor-pointer group/check">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_available}
+                        onChange={(e) => handleInputChange('is_available', e.target.checked)}
+                        className="w-5 h-5 rounded-lg border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 accent-blue-600 focus:ring-2 focus:ring-blue-600 cursor-pointer transition"
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-300 group-hover/check:text-blue-600 transition">
+                        Disponible desde el inicio
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full mt-8 py-4 px-6 bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 dark:from-blue-500 dark:to-blue-500 dark:hover:from-blue-600 dark:hover:to-blue-600 text-white font-bold text-lg rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl hover:shadow-blue-500/25 active:scale-95"
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Registrando...
+                      </span>
+                    ) : (
+                      'Agregar Doctor'
+                    )}
+                  </button>
+                </form>
               </div>
-
-              <div>
-                <label htmlFor="especialidad" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Especialidad
-                </label>
-                <select
-                  id="especialidad"
-                  name="especialidad"
-                  value={especialidadId}
-                  onChange={(e) => setEspecialidadId(e.target.value)}
-                  disabled={loadingEspecialidades}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  required
-                >
-                  <option value="">
-                    {loadingEspecialidades ? 'Cargando especialidades...' : 'Selecciona una especialidad'}
-                  </option>
-                  {especialidades.map((esp) => (
-                    <option key={esp.id} value={esp.id}>
-                      {esp.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Contraseña
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Confirmar contraseña
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              <div className="flex items-start pt-2">
-                <div className="flex items-center h-6">
-                  <input
-                    id="isAvailable"
-                    type="checkbox"
-                    checked={isAvailable}
-                    onChange={(e) => setIsAvailable(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 accent-green-600 focus:ring-2 focus:ring-green-600 cursor-pointer"
-                  />
-                </div>
-                <label htmlFor="isAvailable" className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                  Doctor disponible desde el inicio
-                </label>
-              </div>
-
-              <div className="flex items-start pt-2">
-                <div className="flex items-center h-6">
-                  <input
-                    id="terms"
-                    type="checkbox"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 accent-blue-600 focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                    required
-                  />
-                </div>
-                <label htmlFor="terms" className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                  Acepto los{' '}
-                  <a href="#" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition">
-                    Términos y condiciones
-                  </a>
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-6 py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
-                {loading ? 'Creando cuenta...' : 'Crear cuenta de doctor'}
-              </button>
-
-              <p className="text-center text-sm text-gray-600 dark:text-gray-400 pt-2">
-                ¿Ya tienes una cuenta?{' '}
-                <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition">
-                  Inicia sesión
-                </a>
-              </p>
-            </form>
+            </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scale-in {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slide-down {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out forwards;
+        }
+        .animate-scale-in {
+          animation: scale-in 0.8s ease-out forwards;
+        }
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out forwards;
+        }
+      `}</style>
     </section>
   );
 }

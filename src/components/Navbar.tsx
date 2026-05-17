@@ -1,6 +1,26 @@
-import { Bell, User, BriefcaseMedical } from 'lucide-react';
+import { Bell, User, BriefcaseMedical, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function Navbar() {
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error al cerrar sesión:', error);
+        return;
+      }
+      // Redirigir al login
+      navigate('/login');
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-40">
       <div className="h-16 px-6 flex items-center justify-between">
@@ -21,9 +41,32 @@ export default function Navbar() {
             <Bell size={20} className="text-gray-600" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-            <User size={20} className="text-gray-600" />
-          </button>
+          
+          {/* User Menu */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+            >
+              <User size={20} className="text-gray-600" />
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-lg transition"
+                >
+                  <LogOut size={18} />
+                  <span className="text-sm font-medium">Cerrar sesión</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

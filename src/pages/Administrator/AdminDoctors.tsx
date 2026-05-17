@@ -3,12 +3,13 @@ import { supabase } from '../../lib/supabase'
 
 interface Doctor {
   id: string
-  usuario_id: string
-  full_name: string
-  email: string
+  nombre: string
+  apellido: string
+  dni: string | null
+  telefono: string | null
   especialidad_id: string
   especialidad_nombre: string
-  bio: string
+  bio: string | null
   is_available: boolean
   created_at: string
 }
@@ -32,16 +33,15 @@ export default function AdminDoctors() {
         .from('doctores')
         .select(`
           id,
-          usuario_id,
+          nombre,
+          apellido,
+          dni,
+          telefono,
           especialidad_id,
           bio,
           is_available,
           created_at,
-          usuarios:usuario_id (
-            full_name,
-            email
-          ),
-          especialidades:especialidad_id (
+          especialidades (
             nombre
           )
         `)
@@ -55,12 +55,13 @@ export default function AdminDoctors() {
 
       const formattedDoctors = (data || []).map((doc: any) => ({
         id: doc.id,
-        usuario_id: doc.usuario_id,
+        nombre: doc.nombre,
+        apellido: doc.apellido,
+        dni: doc.dni,
+        telefono: doc.telefono,
         especialidad_id: doc.especialidad_id,
-        full_name: doc.usuarios?.full_name || 'Sin nombre',
-        email: doc.usuarios?.email || 'Sin email',
         especialidad_nombre: doc.especialidades?.nombre || 'Sin especialidad',
-        bio: doc.bio || '',
+        bio: doc.bio,
         is_available: doc.is_available,
         created_at: doc.created_at
       }))
@@ -75,8 +76,8 @@ export default function AdminDoctors() {
   }
 
   const filteredDoctors = doctors.filter(doctor =>
-    doctor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `${doctor.nombre} ${doctor.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (doctor.telefono?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     doctor.especialidad_nombre.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -157,7 +158,7 @@ export default function AdminDoctors() {
         <div className="mb-6">
           <input
             type="text"
-            placeholder="Buscar por nombre, email o especialidad..."
+            placeholder="Buscar por nombre, teléfono o especialidad..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
@@ -187,8 +188,9 @@ export default function AdminDoctors() {
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Nombre</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Email</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Especialidad</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Teléfono</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">DNI</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Registro</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Acciones</th>
@@ -198,15 +200,21 @@ export default function AdminDoctors() {
                   {filteredDoctors.map((doctor) => (
                     <tr key={doctor.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{doctor.full_name}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">{doctor.email}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {doctor.nombre} {doctor.apellido}
+                        </div>
+                        {doctor.bio && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{doctor.bio.substring(0, 50)}...</p>}
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200">
                           {doctor.especialidad_nombre}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{doctor.telefono || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{doctor.dni || '-'}</div>
                       </td>
                       <td className="px-6 py-4">
                         <button
@@ -225,15 +233,6 @@ export default function AdminDoctors() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {/* editar */}}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition"
-                            title="Editar"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
                           <button
                             onClick={() => deleteDoctor(doctor.id)}
                             className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
