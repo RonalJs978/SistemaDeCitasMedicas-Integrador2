@@ -11,8 +11,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: 'appointment', label: 'Appointment', icon: LayoutDashboardIcon, path: '/admin/dashboard' },
-  { id: 'register', label: 'Registro Docs', icon: NotebookIcon, path: '/admin/reports' },
-  { id: 'doctors', label: 'Directorio Docs', icon: List, path: '/admin/users' },
+  { id: 'register', label: 'Registro Docs', icon: NotebookIcon, path: '/admin/AdminDocManager' },
+  { id: 'doctors', label: 'Directorio Docs', icon: List, path: '/admin/AdminDoctors' },
 ];
 
 export default function Sidebar() {

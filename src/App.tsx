@@ -20,11 +20,14 @@ import DoctorNotifications from './pages/Doctor/NotificationsCenter'
 
 // Admin
 import AdminDashboard from './pages/Administrator/Dashboard'
-import AdminUsers from './pages/Administrator/DoctorList'
-import AdminReports from './pages/Administrator/DoctorManager'
+import AdminDoctores from './pages/Administrator/AdminDoctors'
+import AdminDoctorManager from './pages/Administrator/AdminDoctorManager'
 
+
+//sidebars
 import SidebarDoctor from './components/SidebarDoctor'
 import SidebarAdmin from './components/SidebarAdmin'
+
 
 function App() {
   const { isAuthenticated, user } = useAuth()
@@ -131,18 +134,18 @@ function App() {
             }
           />
           <Route
-            path="/admin/users"
+            path="/admin/AdminDoctors"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminUsers />
+                <AdminDoctores />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/admin/reports"
+            path="/admin/AdminDocManager"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminReports />
+                <AdminDoctorManager />
               </ProtectedRoute>
             }
           />

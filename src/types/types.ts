@@ -15,3 +15,39 @@ export interface Appointment {
     status: appointment_status;
 }
 
+export interface Especiality {
+  id: string,
+  nombre: string
+}
+
+export interface CreatedDoctorData {
+  fullName: string,
+  generatedEmail: string,
+  generatedPassword: string
+}
+
+export interface DoctorList {
+  id: string
+  usuario_id: string
+  especialidad_id: string
+  bio: string | null
+  is_available: boolean
+  usuario: {
+    full_name: string
+    email: string
+  }
+  especialidad: {
+    nombre: string
+  }
+}
+
+export interface Doctor {
+  id: string
+  usuario_id: string
+  especialidad_id: string
+  bio: string | null
+  is_available: boolean
+  usuario: { full_name: string; email: string }
+  especialidad: { nombre: string }
+}
+
