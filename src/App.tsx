@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 
 // Pacientes
 import PatientSchedule from './pages/Patient/Schedule'
+import PatientAppointment from './pages/Patient/Appointment'
 import PatientHistory from './pages/Patient/MedicHistory'
 import PatientConfig from './pages/Patient/Config'
 import PatientSupport from './pages/Patient/Suport'
@@ -62,6 +63,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['patient']}>
                 <PatientSchedule />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/appointments"
+            element={
+              <ProtectedRoute allowedRoles={['patient']}>
+                <PatientAppointment />
               </ProtectedRoute>
             }
           />
