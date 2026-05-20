@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react';
-import { User, UserPen, Shield, Mail, Calendar } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { User, UserPen, Shield, Mail, Calendar } from "lucide-react";
 
 import {
   getPatientProfile,
   updatePatientProfile,
   uploadPatientAvatar,
-} from './patient-service';
+} from "./patient-service";
 
 const Config = () => {
   const [profile, setProfile] = useState<any>({
-    dni: '',
-    fecha_nac: '',
-    direccion: '',
-    alergias: '',
-    foto_url: '',
-    email: '',
-    full_name: '',
+    dni: "",
+    fecha_nac: "",
+    direccion: "",
+    alergias: "",
+    foto_url: "",
+    email: "",
+    full_name: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -58,7 +58,7 @@ const Config = () => {
       });
     } catch (error) {
       console.error(error);
-      alert('Error al subir imagen');
+      alert("Error al subir imagen");
     }
   };
 
@@ -71,11 +71,11 @@ const Config = () => {
 
       await updatePatientProfile(profile);
 
-      alert('Perfil actualizado correctamente');
+      alert("Perfil actualizado correctamente");
     } catch (error) {
       console.error(error);
 
-      alert('Error al actualizar perfil');
+      alert("Error al actualizar perfil");
     } finally {
       setLoading(false);
     }
@@ -84,12 +84,6 @@ const Config = () => {
   return (
     <>
       <style>{`
-        *{
-          margin:0;
-          padding:0;
-          box-sizing:border-box;
-          font-family:Arial, Helvetica, sans-serif;
-        }
 
         .container{
           padding:10px;
@@ -450,7 +444,7 @@ const Config = () => {
 
                 <div>
                   <h2 className="profile-name">
-                    {profile.full_name || 'Paciente'}
+                    {profile.full_name || "Paciente"}
                   </h2>
 
                   <p className="profile-email">{profile.email}</p>
@@ -475,7 +469,7 @@ const Config = () => {
 
                 <input
                   type="text"
-                  value={profile.full_name || ''}
+                  value={profile.full_name || ""}
                   placeholder="Falta completar"
                   onChange={(e) =>
                     setProfile({
@@ -490,7 +484,7 @@ const Config = () => {
               <div className="form-group">
                 <label>CORREO ELECTRÓNICO</label>
 
-                <input type="email" value={profile.email || ''} disabled />
+                <input type="email" value={profile.email || ""} disabled />
               </div>
 
               {/* DNI */}
@@ -499,7 +493,7 @@ const Config = () => {
 
                 <input
                   type="text"
-                  value={profile.dni || ''}
+                  value={profile.dni || ""}
                   placeholder="Falta completar"
                   onChange={(e) =>
                     setProfile({
@@ -516,7 +510,7 @@ const Config = () => {
 
                 <input
                   type="date"
-                  value={profile.fecha_nac || ''}
+                  value={profile.fecha_nac || ""}
                   onChange={(e) =>
                     setProfile({
                       ...profile,
@@ -532,7 +526,7 @@ const Config = () => {
 
                 <input
                   type="text"
-                  value={profile.direccion || ''}
+                  value={profile.direccion || ""}
                   placeholder="Falta completar"
                   onChange={(e) =>
                     setProfile({
@@ -549,7 +543,7 @@ const Config = () => {
 
                 <input
                   type="text"
-                  value={profile.alergias || ''}
+                  value={profile.alergias || ""}
                   placeholder="Falta completar"
                   onChange={(e) =>
                     setProfile({
@@ -673,7 +667,7 @@ const Config = () => {
               <button className="cancel-btn">Cancelar</button>
 
               <button className="save-btn" onClick={handleSave}>
-                {loading ? 'Guardando...' : 'Guardar Cambios'}
+                {loading ? "Guardando..." : "Guardar Cambios"}
               </button>
             </div>
           </div>
