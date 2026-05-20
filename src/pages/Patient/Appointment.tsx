@@ -1,15 +1,7 @@
 import ReprogramModal from "../../components/ReprogramModal";
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  Calendar,
-  Clock,
-  FileText,
-  User,
-} from "lucide-react";
+import { Calendar, Clock, FileText, User } from "lucide-react";
 
 import {
   cancelAppointment,
@@ -17,102 +9,65 @@ import {
 } from "../../lib/appointment-service";
 
 const Appointments = () => {
-  const [appointments,
-    setAppointments] =
-    useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [openModal,
-    setOpenModal] =
-    useState(false);
+  const [openModal, setOpenModal] = useState(false);
 
-  const [selectedAppointment,
-    setSelectedAppointment] =
-    useState<any>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   useEffect(() => {
     loadAppointments();
   }, []);
 
-  const loadAppointments =
-    async () => {
-      try {
-        const data =
-          await getPatientAppointments();
+  const loadAppointments = async () => {
+    try {
+      const data = await getPatientAppointments();
 
-        setAppointments(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setAppointments(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleCancel =
-    async (id: string) => {
-      const confirmCancel =
-        confirm(
-          "¿Cancelar esta cita?"
-        );
+  const handleCancel = async (id: string) => {
+    const confirmCancel = confirm("¿Cancelar esta cita?");
 
-      if (!confirmCancel) return;
+    if (!confirmCancel) return;
 
-      try {
-        await cancelAppointment(id);
+    try {
+      await cancelAppointment(id);
 
-        loadAppointments();
+      loadAppointments();
 
-        alert(
-          "Cita cancelada"
-        );
-      } catch (error) {
-        console.error(error);
+      alert("Cita cancelada");
+    } catch (error) {
+      console.error(error);
 
-        alert(
-          "Error al cancelar"
-        );
-      }
-    };
+      alert("Error al cancelar");
+    }
+  };
 
   const now = new Date();
 
-  const upcomingAppointments =
-    appointments.filter(
-      (appointment) =>
-        new Date(
-          appointment.fecha_hora
-        ) >= now
-    );
+  const upcomingAppointments = appointments.filter(
+    (appointment) => new Date(appointment.fecha_hora) >= now,
+  );
 
-  const pastAppointments =
-    appointments.filter(
-      (appointment) => {
-        const date =
-          new Date(
-            appointment.fecha_hora
-          );
+  const pastAppointments = appointments.filter((appointment) => {
+    const date = new Date(appointment.fecha_hora);
 
-        const diffDays =
-          (now.getTime() -
-            date.getTime()) /
-          (1000 * 60 * 60 * 24);
+    const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
 
-        return (
-          date < now &&
-          diffDays <= 3
-        );
-      }
-    );
+    return date < now && diffDays <= 3;
+  });
 
   return (
     <>
       <style>{`
-        *{
-          box-sizing:border-box;
-          font-family:Arial;
-        }
 
         .appointments-container{
           min-height:100vh;
@@ -255,223 +210,144 @@ const Appointments = () => {
           }
         }
       `}</style>
-      
-      <div className="appointments-container">
-        <h1 className="title">
-          Citas Agendadas
-        </h1>
 
-        <ReprogramModal open={openModal} appointment={selectedAppointment} onClose={() => setOpenModal(false)} onSuccess={loadAppointments}/>
+      <div className="appointments-container">
+        <h1 className="title">Citas Agendadas</h1>
+
+        <ReprogramModal
+          open={openModal}
+          appointment={selectedAppointment}
+          onClose={() => setOpenModal(false)}
+          onSuccess={loadAppointments}
+        />
 
         {/* UPCOMING */}
         <div className="section">
-          <h2 className="section-title">
-            Próximas Citas
-          </h2>
+          <h2 className="section-title">Próximas Citas</h2>
 
           <div className="appointments-grid">
-            {upcomingAppointments.length ===
-            0 ? (
-              <p className="empty">
-                No tienes próximas
-                citas
-              </p>
+            {upcomingAppointments.length === 0 ? (
+              <p className="empty">No tienes próximas citas</p>
             ) : (
-              upcomingAppointments.map(
-                (appointment) => (
-                  <div
-                    key={
-                      appointment.id
-                    }
-                    className="appointment-card"
-                  >
-                    <div className="status">
-                      PENDIENTE
+              upcomingAppointments.map((appointment) => (
+                <div key={appointment.id} className="appointment-card">
+                  <div className="status">PENDIENTE</div>
+
+                  <div className="doctor-row">
+                    <div className="doctor-image-container">
+                      {appointment.doctores?.foto_url ? (
+                        <img
+                          src={appointment.doctores.foto_url}
+                          className="doctor-image"
+                        />
+                      ) : (
+                        <User className="doctor-icon" />
+                      )}
                     </div>
 
-                    <div className="doctor-row">
-                      <div className="doctor-image-container">
-                        {appointment
-                          .doctores
-                          ?.foto_url ? (
-                          <img
-                            src={
-                              appointment
-                                .doctores
-                                .foto_url
-                            }
-                            className="doctor-image"
-                          />
-                        ) : (
-                          <User className="doctor-icon" />
-                        )}
-                      </div>
+                    <div>
+                      <p className="doctor-name">
+                        Dr. {appointment.doctores?.nombre}{" "}
+                        {appointment.doctores?.apellido}
+                      </p>
 
-                      <div>
-                        <p className="doctor-name">
-                          Dr.{" "}
-                          {
-                            appointment
-                              .doctores
-                              ?.nombre
-                          }{" "}
-                          {
-                            appointment
-                              .doctores
-                              ?.apellido
-                          }
-                        </p>
-
-                        <p className="specialty">
-                          {
-                            appointment
-                              .doctores
-                              ?.especialidades
-                              ?.nombre
-                          }
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="info-row">
-                      <Calendar />
-
-                      <span>
-                        {new Date(
-                          appointment.fecha_hora
-                        ).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <div className="info-row">
-                      <Clock />
-
-                      <span>
-                        {appointment.fecha_hora
-  .split("T")[1]
-  .substring(0,5)}
-                      </span>
-                    </div>
-
-                    <div className="actions">
-                      <button
-                        className="btn primary-btn"
-                        onClick={() => {
-                          setSelectedAppointment(
-                            appointment
-                          );
-
-                          setOpenModal(true);
-                        }}
-                        >
-                        Reprogramar
-                    </button>
-
-                      <button
-                        className="btn secondary-btn"
-                        onClick={() =>
-                          handleCancel(
-                            appointment.id
-                          )
-                        }
-                      >
-                        Cancelar
-                      </button>
+                      <p className="specialty">
+                        {appointment.doctores?.especialidades?.nombre}
+                      </p>
                     </div>
                   </div>
-                )
-              )
+
+                  <div className="info-row">
+                    <Calendar />
+
+                    <span>
+                      {new Date(appointment.fecha_hora).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="info-row">
+                    <Clock />
+
+                    <span>
+                      {appointment.fecha_hora.split("T")[1].substring(0, 5)}
+                    </span>
+                  </div>
+
+                  <div className="actions">
+                    <button
+                      className="btn primary-btn"
+                      onClick={() => {
+                        setSelectedAppointment(appointment);
+
+                        setOpenModal(true);
+                      }}
+                    >
+                      Reprogramar
+                    </button>
+
+                    <button
+                      className="btn secondary-btn"
+                      onClick={() => handleCancel(appointment.id)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
 
-        
-
         {/* PAST */}
         <div className="section">
-          <h2 className="section-title">
-            Citas Pasadas
-          </h2>
+          <h2 className="section-title">Citas Pasadas</h2>
 
           <div className="appointments-grid">
-            {pastAppointments.length ===
-            0 ? (
-              <p className="empty">
-                No hay citas pasadas
-              </p>
+            {pastAppointments.length === 0 ? (
+              <p className="empty">No hay citas pasadas</p>
             ) : (
-              pastAppointments.map(
-                (appointment) => (
-                  <div
-                    key={
-                      appointment.id
-                    }
-                    className="appointment-card"
-                  >
-                    <div className="doctor-row">
-                      <div className="doctor-image-container">
-                        {appointment
-                          .doctores
-                          ?.foto_url ? (
-                          <img
-                            src={
-                              appointment
-                                .doctores
-                                .foto_url
-                            }
-                            className="doctor-image"
-                          />
-                        ) : (
-                          <User className="doctor-icon" />
-                        )}
-                      </div>
-
-                      <div>
-                        <p className="doctor-name">
-                          Dr.{" "}
-                          {
-                            appointment
-                              .doctores
-                              ?.nombre
-                          }{" "}
-                          {
-                            appointment
-                              .doctores
-                              ?.apellido
-                          }
-                        </p>
-
-                        <p className="specialty">
-                          {
-                            appointment
-                              .doctores
-                              ?.especialidades
-                              ?.nombre
-                          }
-                        </p>
-                      </div>
+              pastAppointments.map((appointment) => (
+                <div key={appointment.id} className="appointment-card">
+                  <div className="doctor-row">
+                    <div className="doctor-image-container">
+                      {appointment.doctores?.foto_url ? (
+                        <img
+                          src={appointment.doctores.foto_url}
+                          className="doctor-image"
+                        />
+                      ) : (
+                        <User className="doctor-icon" />
+                      )}
                     </div>
 
-                    <div className="info-row">
-                      <Calendar />
+                    <div>
+                      <p className="doctor-name">
+                        Dr. {appointment.doctores?.nombre}{" "}
+                        {appointment.doctores?.apellido}
+                      </p>
 
-                      <span>
-                        {new Date(
-                          appointment.fecha_hora
-                        ).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <div className="actions">
-                      <button className="btn secondary-btn">
-                        <FileText />
-                        &nbsp;
-                        Receta
-                      </button>
+                      <p className="specialty">
+                        {appointment.doctores?.especialidades?.nombre}
+                      </p>
                     </div>
                   </div>
-                )
-              )
+
+                  <div className="info-row">
+                    <Calendar />
+
+                    <span>
+                      {new Date(appointment.fecha_hora).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="actions">
+                    <button className="btn secondary-btn">
+                      <FileText />
+                      &nbsp; Receta
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>

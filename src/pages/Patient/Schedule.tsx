@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Calendar,
-  Clock,
-  User,
-  Stethoscope,
-} from "lucide-react";
+import { Calendar, Clock, User, Stethoscope } from "lucide-react";
 
 import {
   AVAILABLE_TIMES,
@@ -19,34 +14,21 @@ import {
 
 const Schedule = () => {
   const navigate = useNavigate();
-  const [specialties, setSpecialties] =
-    useState<any[]>([]);
+  const [specialties, setSpecialties] = useState<any[]>([]);
 
-  const [doctors, setDoctors] =
-    useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
 
-  const [selectedSpecialty,
-    setSelectedSpecialty] =
-    useState("");
+  const [selectedSpecialty, setSelectedSpecialty] = useState("");
 
-  const [selectedDoctor,
-    setSelectedDoctor] =
-    useState<any>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
 
-  const [selectedDate,
-    setSelectedDate] =
-    useState("");
+  const [selectedDate, setSelectedDate] = useState("");
 
-  const [selectedTime,
-    setSelectedTime] =
-    useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
-  const [occupiedTimes,
-    setOccupiedTimes] =
-    useState<string[]>([]);
+  const [occupiedTimes, setOccupiedTimes] = useState<string[]>([]);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   /* =====================================
       LOAD SPECIALTIES
@@ -55,129 +37,91 @@ const Schedule = () => {
     loadSpecialties();
   }, []);
 
-  const loadSpecialties =
-    async () => {
-      try {
-        const data =
-          await getSpecialties();
+  const loadSpecialties = async () => {
+    try {
+      const data = await getSpecialties();
 
-        setSpecialties(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+      setSpecialties(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   /* =====================================
       LOAD DOCTORS
   ===================================== */
   useEffect(() => {
-    if (!selectedSpecialty)
-      return;
+    if (!selectedSpecialty) return;
 
     loadDoctors();
   }, [selectedSpecialty]);
 
-  const loadDoctors =
-    async () => {
-      try {
-        const data =
-          await getDoctorsBySpecialty(
-            selectedSpecialty
-          );
+  const loadDoctors = async () => {
+    try {
+      const data = await getDoctorsBySpecialty(selectedSpecialty);
 
-        setDoctors(data);
+      setDoctors(data);
 
-        setSelectedDoctor(null);
-        setSelectedTime("");
-      } catch (error) {
-        console.error(error);
-      }
-    };
+      setSelectedDoctor(null);
+      setSelectedTime("");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   /* =====================================
       LOAD OCCUPIED TIMES
   ===================================== */
   useEffect(() => {
-    if (
-      !selectedDoctor ||
-      !selectedDate
-    )
-      return;
+    if (!selectedDoctor || !selectedDate) return;
 
     loadOccupiedTimes();
-  }, [
-    selectedDoctor,
-    selectedDate,
-  ]);
+  }, [selectedDoctor, selectedDate]);
 
-  const loadOccupiedTimes =
-    async () => {
-      try {
-        const data =
-          await getOccupiedTimes(
-            selectedDoctor.id,
-            selectedDate
-          );
+  const loadOccupiedTimes = async () => {
+    try {
+      const data = await getOccupiedTimes(selectedDoctor.id, selectedDate);
 
-        setOccupiedTimes(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+      setOccupiedTimes(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   /* =====================================
       CONFIRM APPOINTMENT
   ===================================== */
-  const handleConfirm =
-    async () => {
-      try {
-        if (
-          !selectedDoctor ||
-          !selectedDate ||
-          !selectedTime
-        ) {
-          return alert(
-            "Completa todos los campos"
-          );
-        }
-
-        setLoading(true);
-
-        await createAppointment({
-          doctorId:
-            selectedDoctor.id,
-          date: selectedDate,
-          time: selectedTime,
-        });
-
-        alert(
-          "Cita agendada correctamente"
-        );
-
-        setSelectedTime("");
-
-        loadOccupiedTimes();
-      } catch (error: any) {
-        console.error(error);
-
-        alert(
-          error.message ||
-            "Error al agendar"
-        );
-      } finally {
-        setLoading(false);
+  const handleConfirm = async () => {
+    try {
+      if (!selectedDoctor || !selectedDate || !selectedTime) {
+        return alert("Completa todos los campos");
       }
-    };
+
+      setLoading(true);
+
+      await createAppointment({
+        doctorId: selectedDoctor.id,
+        date: selectedDate,
+        time: selectedTime,
+      });
+
+      alert("Cita agendada correctamente");
+
+      setSelectedTime("");
+
+      loadOccupiedTimes();
+    } catch (error: any) {
+      console.error(error);
+
+      alert(error.message || "Error al agendar");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
       <style>{`
-        *{
-          margin:0;
-          padding:0;
-          box-sizing:border-box;
-          font-family:Arial, Helvetica, sans-serif;
-        }
 
         .schedule-container{
           width:100%;
@@ -433,17 +377,11 @@ const Schedule = () => {
       <div className="schedule-container">
         {/* HEADER */}
         <div className="header">
-          <h1 className="title">
-            Agenda una Cita
-          </h1>
+          <h1 className="title">Agenda una Cita</h1>
 
           <button
             className="appointments-btn"
-            onClick={() =>
-            navigate(
-              "/patient/appointments"
-              )
-            }
+            onClick={() => navigate("/patient/appointments")}
           >
             Citas agendadas
           </button>
@@ -454,71 +392,39 @@ const Schedule = () => {
           <div className="left">
             {/* FORM */}
             <div className="card">
-              <h2 className="section-title">
-                Detalles de la Cita
-              </h2>
+              <h2 className="section-title">Detalles de la Cita</h2>
 
               {/* SPECIALTY */}
-              <label className="label">
-                Especialidad
-              </label>
+              <label className="label">Especialidad</label>
 
               <select
                 className="select"
-                value={
-                  selectedSpecialty
-                }
-                onChange={(e) =>
-                  setSelectedSpecialty(
-                    e.target.value
-                  )
-                }
+                value={selectedSpecialty}
+                onChange={(e) => setSelectedSpecialty(e.target.value)}
               >
-                <option value="">
-                  Selecciona una
-                  especialidad
-                </option>
+                <option value="">Selecciona una especialidad</option>
 
-                {specialties.map(
-                  (specialty) => (
-                    <option
-                      key={specialty.id}
-                      value={
-                        specialty.id
-                      }
-                    >
-                      {specialty.nombre}
-                    </option>
-                  )
-                )}
+                {specialties.map((specialty) => (
+                  <option key={specialty.id} value={specialty.id}>
+                    {specialty.nombre}
+                  </option>
+                ))}
               </select>
 
               {/* DATE */}
-              <label className="label">
-                Fecha
-              </label>
+              <label className="label">Fecha</label>
 
               <input
                 type="date"
                 className="date-input"
                 value={selectedDate}
-                min={
-                  new Date()
-                    .toISOString()
-                    .split("T")[0]
-                }
-                onChange={(e) =>
-                  setSelectedDate(
-                    e.target.value
-                  )
-                }
+                min={new Date().toISOString().split("T")[0]}
+                onChange={(e) => setSelectedDate(e.target.value)}
               />
             </div>
 
             {/* SUMMARY */}
-            <div
-              className="card summary-card"
-            >
+            <div className="card summary-card">
               <h2
                 className="section-title"
                 style={{
@@ -534,9 +440,7 @@ const Schedule = () => {
                 </div>
 
                 <div>
-                  <p className="summary-label">
-                    MÉDICO
-                  </p>
+                  <p className="summary-label">MÉDICO</p>
 
                   <p className="summary-value">
                     {selectedDoctor
@@ -552,14 +456,9 @@ const Schedule = () => {
                 </div>
 
                 <div>
-                  <p className="summary-label">
-                    FECHA
-                  </p>
+                  <p className="summary-label">FECHA</p>
 
-                  <p className="summary-value">
-                    {selectedDate ||
-                      "--"}
-                  </p>
+                  <p className="summary-value">{selectedDate || "--"}</p>
                 </div>
               </div>
 
@@ -569,26 +468,14 @@ const Schedule = () => {
                 </div>
 
                 <div>
-                  <p className="summary-label">
-                    HORA
-                  </p>
+                  <p className="summary-label">HORA</p>
 
-                  <p className="summary-value">
-                    {selectedTime ||
-                      "--"}
-                  </p>
+                  <p className="summary-value">{selectedTime || "--"}</p>
                 </div>
               </div>
 
-              <button
-                className="confirm-btn"
-                onClick={
-                  handleConfirm
-                }
-              >
-                {loading
-                  ? "Agendando..."
-                  : "Confirmar Cita"}
+              <button className="confirm-btn" onClick={handleConfirm}>
+                {loading ? "Agendando..." : "Confirmar Cita"}
               </button>
             </div>
           </div>
@@ -597,72 +484,45 @@ const Schedule = () => {
           <div className="right">
             {/* DOCTORS */}
             <div className="card">
-              <h2 className="section-title">
-                Seleccionar Médico
-              </h2>
+              <h2 className="section-title">Seleccionar Médico</h2>
 
-              {doctors.length ===
-              0 ? (
-                <div className="empty-message">
-                  Selecciona una
-                  especialidad
-                </div>
+              {doctors.length === 0 ? (
+                <div className="empty-message">Selecciona una especialidad</div>
               ) : (
                 <div className="doctor-grid">
-                  {doctors.map(
-                    (doctor) => (
-                      <div
-                        key={doctor.id}
-                        className={`doctor-card ${
-                          selectedDoctor?.id ===
-                          doctor.id
-                            ? "active"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          setSelectedDoctor(
-                            doctor
-                          );
+                  {doctors.map((doctor) => (
+                    <div
+                      key={doctor.id}
+                      className={`doctor-card ${
+                        selectedDoctor?.id === doctor.id ? "active" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedDoctor(doctor);
 
-                          setSelectedTime(
-                            ""
-                          );
-                        }}
-                      >
-                        <div className="doctor-image-container">
-                          {doctor.foto_url ? (
-                            <img
-                              src={
-                                doctor.foto_url
-                              }
-                              alt=""
-                              className="doctor-image"
-                            />
-                          ) : (
-                            <Stethoscope className="doctor-default-icon" />
-                          )}
-                        </div>
-
-                        <p className="doctor-name">
-                          Dr.{" "}
-                          {
-                            doctor.nombre
-                          }{" "}
-                          {
-                            doctor.apellido
-                          }
-                        </p>
-
-                        <p className="doctor-specialty">
-                          {
-                            doctor
-                              .especialidades
-                              ?.nombre
-                          }
-                        </p>
+                        setSelectedTime("");
+                      }}
+                    >
+                      <div className="doctor-image-container">
+                        {doctor.foto_url ? (
+                          <img
+                            src={doctor.foto_url}
+                            alt=""
+                            className="doctor-image"
+                          />
+                        ) : (
+                          <Stethoscope className="doctor-default-icon" />
+                        )}
                       </div>
-                    )
-                  )}
+
+                      <p className="doctor-name">
+                        Dr. {doctor.nombre} {doctor.apellido}
+                      </p>
+
+                      <p className="doctor-specialty">
+                        {doctor.especialidades?.nombre}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -670,91 +530,46 @@ const Schedule = () => {
             {/* TIMES */}
             {selectedDoctor && (
               <div className="card">
-                <h2 className="section-title">
-                  Horarios
-                  Disponibles
-                </h2>
+                <h2 className="section-title">Horarios Disponibles</h2>
 
                 <div className="times-grid">
-                  {AVAILABLE_TIMES
-                    .filter((time) => {
-                      if (
-                        occupiedTimes.includes(
-                          time
-                        )
-                      ) {
-                        return false;
-                      }
+                  {AVAILABLE_TIMES.filter((time) => {
+                    if (occupiedTimes.includes(time)) {
+                      return false;
+                    }
 
-                      if (
-                        !selectedDate
-                      ) {
-                        return true;
-                      }
-
-                      const now =
-                        new Date();
-
-                      const today =
-                        now
-                          .toISOString()
-                          .split(
-                            "T"
-                          )[0];
-
-                      if (
-                        selectedDate ===
-                        today
-                      ) {
-                        const [
-                          hours,
-                          minutes,
-                        ] =
-                          time.split(
-                            ":"
-                          );
-
-                        const timeDate =
-                          new Date();
-
-                        timeDate.setHours(
-                          Number(
-                            hours
-                          )
-                        );
-
-                        timeDate.setMinutes(
-                          Number(
-                            minutes
-                          )
-                        );
-
-                        return (
-                          timeDate >
-                          now
-                        );
-                      }
-
+                    if (!selectedDate) {
                       return true;
-                    })
-                    .map((time) => (
-                      <button
-                        key={time}
-                        className={`time-btn ${
-                          selectedTime ===
-                          time
-                            ? "active"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          setSelectedTime(
-                            time
-                          )
-                        }
-                      >
-                        {time}
-                      </button>
-                    ))}
+                    }
+
+                    const now = new Date();
+
+                    const today = now.toISOString().split("T")[0];
+
+                    if (selectedDate === today) {
+                      const [hours, minutes] = time.split(":");
+
+                      const timeDate = new Date();
+
+                      timeDate.setHours(Number(hours));
+
+                      timeDate.setMinutes(Number(minutes));
+
+                      return timeDate > now;
+                    }
+
+                    return true;
+                  }).map((time) => (
+                    <button
+                      key={time}
+                      className={`time-btn ${
+                        selectedTime === time ? "active" : ""
+                      }`}
+                      onClick={() => setSelectedTime(time)}
+                    >
+                      {time}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
