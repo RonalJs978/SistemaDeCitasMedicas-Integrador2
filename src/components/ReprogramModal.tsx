@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-
-import {
-  Calendar,
-  Clock,
-  X,
-} from "lucide-react";
+import { Calendar, Clock, X } from "lucide-react";
 
 import {
   AVAILABLE_TIMES,
@@ -25,447 +20,223 @@ const ReprogramModal = ({
   appointment,
   onSuccess,
 }: Props) => {
-  const [selectedDate,
-    setSelectedDate] =
-    useState("");
-
-  const [selectedTime,
-    setSelectedTime] =
-    useState("");
-
-  const [occupiedTimes,
-    setOccupiedTimes] =
-    useState<string[]>([]);
-
-  const [loading, setLoading] =
-    useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [occupiedTimes, setOccupiedTimes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (
-      !appointment ||
-      !selectedDate
-    )
-      return;
-
+    setSelectedTime(""); // Limpiar hora seleccionada al cambiar la fecha
+    if (!appointment || !selectedDate) return;
     loadOccupiedTimes();
-  }, [selectedDate]);
+  }, [selectedDate, appointment]);
 
-  const loadOccupiedTimes =
-    async () => {
-      try {
-        const data =
-          await getOccupiedTimes(
-            appointment.doctor_id,
-            selectedDate
-          );
+  const loadOccupiedTimes = async () => {
+    try {
+      const data = await getOccupiedTimes(
+        appointment.doctor_id,
+        selectedDate
+      );
+      setOccupiedTimes(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-        setOccupiedTimes(data);
-      } catch (error) {
-        console.error(error);
+  const handleConfirm = async () => {
+    try {
+      if (!selectedDate || !selectedTime) {
+        return alert("Selecciona fecha y hora");
       }
-    };
 
-  const handleConfirm =
-    async () => {
-      try {
-        if (
-          !selectedDate ||
-          !selectedTime
-        ) {
-          return alert(
-            "Selecciona fecha y hora"
-          );
-        }
+      setLoading(true);
 
-        setLoading(true);
+      await rescheduleAppointment({
+        appointmentId: appointment.id,
+        doctorId: appointment.doctor_id,
+        oldDate: appointment.fecha_hora,
+        newDate: selectedDate,
+        newTime: selectedTime,
+      });
 
-        await rescheduleAppointment({
-          appointmentId:
-            appointment.id,
+      // Resetear estados al tener éxito
+      setSelectedDate("");
+      setSelectedTime("");
+      setOccupiedTimes([]);
 
-          doctorId:
-            appointment.doctor_id,
+      alert("Cita reprogramada con éxito");
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "Error al reprogramar");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          oldDate:
-            appointment.fecha_hora,
+  const parseAppointmentDate = (str: string) => {
+    if (!str) return new Date();
+    return new Date(str.replace(" ", "T"));
+  };
 
-          newDate:
-            selectedDate,
+  const getAppointmentTime = (fechaHoraStr: string) => {
+    if (!fechaHoraStr) return "";
+    const match = fechaHoraStr.match(/(?:T|\s)(\d{2}:\d{2})/);
+    return match ? match[1] : "";
+  };
 
-          newTime:
-            selectedTime,
-        });
-        /* RESET STATES */
-setSelectedDate("");
-setSelectedTime("");
-setOccupiedTimes([]);
-
-        alert(
-          "Cita reprogramada"
-        );
-
-        onSuccess();
-
-        onClose();
-      } catch (error: any) {
-        console.error(error);
-
-        alert(
-          error.message ||
-            "Error al reprogramar"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const getAppointmentDateString = (fechaHoraStr: string) => {
+    if (!fechaHoraStr) return "";
+    const date = parseAppointmentDate(fechaHoraStr);
+    if (isNaN(date.getTime())) return fechaHoraStr.split(" ")[0] || "";
+    
+    const rawDateStr = date.toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+    return rawDateStr.charAt(0).toUpperCase() + rawDateStr.slice(1);
+  };
 
   if (!open) return null;
 
+  const localToday = new Date().toLocaleDateString('sv-SE');
+
   return (
-    <>
-      <style>{`
-        .modal-overlay{
-          position:fixed;
-          inset:0;
-          background:rgba(0,0,0,0.5);
-          backdrop-filter:blur(4px);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          z-index:9999;
-          padding:20px;
-        }
-
-        .modal{
-          width:100%;
-          max-width:850px;
-          background:white;
-          border-radius:28px;
-          overflow:hidden;
-          animation:fadeIn .25s ease;
-        }
-
-        @keyframes fadeIn{
-          from{
-            opacity:0;
-            transform:translateY(20px);
-          }
-          to{
-            opacity:1;
-            transform:translateY(0);
-          }
-        }
-
-        .modal-header{
-          background:#17458f;
-          color:white;
-          padding:30px;
-          display:flex;
-          justify-content:space-between;
-          align-items:flex-start;
-        }
-
-        .modal-title{
-          font-size:34px;
-          font-weight:bold;
-          margin-bottom:8px;
-        }
-
-        .modal-subtitle{
-          opacity:0.8;
-        }
-
-        .close-btn{
-          background:none;
-          border:none;
-          color:white;
-          font-size:26px;
-          cursor:pointer;
-        }
-
-        .modal-body{
-          padding:35px;
-        }
-
-        .current-card{
-          background:#f3f5f9;
-          border-radius:24px;
-          padding:25px;
-          margin-bottom:35px;
-        }
-
-        .doctor-name{
-          font-size:26px;
-          font-weight:bold;
-          color:#17458f;
-          margin-bottom:10px;
-        }
-
-        .info{
-          display:flex;
-          align-items:center;
-          gap:10px;
-          margin-bottom:10px;
-          color:#555;
-        }
-
-        .grid{
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:30px;
-        }
-
-        .section-title{
-          font-size:22px;
-          font-weight:bold;
-          margin-bottom:20px;
-        }
-
-        .date-input{
-          width:100%;
-          border:none;
-          background:#f3f5f9;
-          padding:18px;
-          border-radius:18px;
-          font-size:16px;
-          outline:none;
-        }
-
-        .times-grid{
-          display:grid;
-          grid-template-columns:repeat(2,1fr);
-          gap:15px;
-        }
-
-        .time-btn{
-          border:none;
-          background:#f3f5f9;
-          padding:18px;
-          border-radius:16px;
-          font-weight:bold;
-          cursor:pointer;
-          transition:0.3s;
-        }
-
-        .time-btn.active{
-          background:#17458f;
-          color:white;
-        }
-
-        .footer{
-          display:flex;
-          justify-content:flex-end;
-          gap:20px;
-          padding:30px;
-          border-top:1px solid #eee;
-        }
-
-        .btn{
-          border:none;
-          padding:16px 28px;
-          border-radius:16px;
-          font-weight:bold;
-          cursor:pointer;
-          font-size:16px;
-        }
-
-        .cancel-btn{
-          background:#eceff5;
-        }
-
-        .confirm-btn{
-          background:#17458f;
-          color:white;
-        }
-
-        @media(max-width:800px){
-          .grid{
-            grid-template-columns:1fr;
-          }
-
-          .footer{
-            flex-direction:column;
-          }
-
-          .btn{
-            width:100%;
-          }
-
-          .modal-title{
-            font-size:28px;
-          }
-        }
-      `}</style>
-
-      <div
-        className="modal-overlay"
-        onClick={onClose}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 md:p-6 transition-all duration-300">
+      <div 
+        className="w-full max-w-2xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="modal"
-          onClick={(e) =>
-            e.stopPropagation()
-          }
-        >
-          {/* HEADER */}
-          <div className="modal-header">
-            <div>
-              <h2 className="modal-title">
-                Reprogramar Cita
-              </h2>
-
-              <p className="modal-subtitle">
-                Ajusta tu horario
-                según tu
-                disponibilidad
-              </p>
-            </div>
-
-            <button
-              className="close-btn"
-              onClick={onClose}
-            >
-              <X size={26} />
-            </button>
+        {/* HEADER */}
+        <div className="bg-gradient-to-r from-blue-900 to-blue-950 text-white p-6 md:p-8 flex justify-between items-start shrink-0">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+              Reprogramar Cita
+            </h2>
+            <p className="text-sm text-blue-100/80 mt-1.5">
+              Elige un nuevo horario de acuerdo con tu disponibilidad y la del médico.
+            </p>
           </div>
+          <button
+            className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all cursor-pointer"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-          {/* BODY */}
-          <div className="modal-body">
-            {/* CURRENT */}
-            <div className="current-card">
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "#666",
-                  marginBottom: 10,
-                  fontWeight:
-                    "bold",
-                }}
-              >
-                CITA ACTUAL
-              </p>
-
-              <h3 className="doctor-name">
-                {
-                  appointment
-                    ?.doctores
-                    ?.especialidades
-                    ?.nombre
-                }
-              </h3>
-
-              <div className="info">
-                <Calendar size={16} />
-
-                <span>
-                  {new Date(
-                    appointment.fecha_hora
-                  ).toLocaleDateString()}
-                </span>
-              </div>
-
-              <div className="info">
-                <Clock size={16} />
-
-                <span>
-                  {appointment.fecha_hora
-      .split("T")[1]
-      .substring(0,5)}
-                </span>
-              </div>
-            </div>
-
-            {/* CONTENT */}
-            <div className="grid">
-              {/* DATE */}
+        {/* BODY (Scrollable if content overflows) */}
+        <div className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1">
+          {/* CURRENT APPOINTMENT INFO */}
+          {appointment && (
+            <div className="bg-gray-50 border border-gray-200/60 rounded-2xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h3 className="section-title">
-                  1. Selecciona Nueva
-                  Fecha
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                  Cita Actual
+                </p>
+                <h3 className="text-lg font-bold text-blue-955 leading-tight">
+                  Dr. {appointment.doctores?.nombre} {appointment.doctores?.apellido}
                 </h3>
-
-                <input
-                  type="date"
-                  className="date-input"
-                  min={
-                    new Date()
-                      .toISOString()
-                      .split(
-                        "T"
-                      )[0]
-                  }
-                  value={
-                    selectedDate
-                  }
-                  onChange={(e) =>
-                    setSelectedDate(
-                      e.target.value
-                    )
-                  }
-                />
+                <p className="text-xs font-medium text-gray-500 mt-0.5">
+                  {appointment.doctores?.especialidades?.nombre || "Especialista"}
+                </p>
               </div>
 
-              {/* TIMES */}
-              <div>
-                <h3 className="section-title">
-                  2. Horarios
-                  Disponibles
-                </h3>
-
-                <div className="times-grid">
-                  {AVAILABLE_TIMES
-                    .filter(
-                      (time) =>
-                        !occupiedTimes.includes(
-                          time
-                        )
-                    )
-                    .map((time) => (
-                      <button
-                        key={time}
-                        className={`time-btn ${
-                          selectedTime ===
-                          time
-                            ? "active"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          setSelectedTime(
-                            time
-                          )
-                        }
-                      >
-                        {time}
-                      </button>
-                    ))}
+              <div className="flex flex-col gap-2 shrink-0 md:border-l md:border-gray-200 md:pl-6">
+                <div className="flex items-center gap-2 text-gray-600 text-sm font-medium">
+                  <Calendar size={15} className="text-blue-900/60" />
+                  <span>{getAppointmentDateString(appointment.fecha_hora)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600 text-sm font-medium">
+                  <Clock size={15} className="text-blue-900/60" />
+                  <span>{getAppointmentTime(appointment.fecha_hora)} hrs</span>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* FOOTER */}
-          <div className="footer">
-            <button
-              className="btn cancel-btn"
-              onClick={onClose}
-            >
-              Cancelar
-            </button>
+          {/* GRID: SELECTION FORM */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* DATE */}
+            <div>
+              <h3 className="text-base font-bold text-gray-800 mb-3 pb-1 border-b border-gray-100 flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">1</span>
+                Nueva Fecha
+              </h3>
+              <input
+                type="date"
+                className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900/10 focus:border-blue-900 transition-all text-gray-700 font-medium"
+                min={localToday}
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+            </div>
 
-            <button
-              className="btn confirm-btn"
-              onClick={
-                handleConfirm
-              }
-            >
-              {loading
-                ? "Reprogramando..."
-                : "Confirmar Nueva Fecha"}
-            </button>
+            {/* TIME */}
+            <div>
+              <h3 className="text-base font-bold text-gray-800 mb-3 pb-1 border-b border-gray-100 flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">2</span>
+                Horarios Disponibles
+              </h3>
+
+              {!selectedDate ? (
+                <div className="text-center text-gray-400 py-6 italic text-sm font-medium bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1">
+                  <Calendar size={18} className="text-gray-300" />
+                  <span>Selecciona una fecha primero</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5 max-h-[160px] overflow-y-auto pr-1">
+                  {AVAILABLE_TIMES.map((time) => {
+                    const isOccupied = occupiedTimes.includes(time);
+                    return (
+                      <button
+                        key={time}
+                        disabled={isOccupied}
+                        className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${
+                          isOccupied
+                            ? "bg-gray-150 border-gray-200 text-gray-350 cursor-not-allowed opacity-50"
+                            : selectedTime === time
+                            ? "bg-blue-900 text-white border-blue-900 hover:bg-blue-800"
+                            : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-blue-50/50 hover:border-blue-300"
+                        }`}
+                        onClick={() => setSelectedTime(time)}
+                      >
+                        {time} hrs
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* FOOTER */}
+        <div className="flex flex-col sm:flex-row justify-end gap-3 p-6 bg-gray-50 border-t border-gray-100 shrink-0">
+          <button
+            className="px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 bg-gray-150 hover:bg-gray-200 text-gray-700 cursor-pointer"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+
+          <button
+            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+              loading || !selectedDate || !selectedTime
+                ? "bg-blue-900/40 text-white/60 cursor-not-allowed border-0"
+                : "bg-blue-900 hover:bg-blue-800 text-white cursor-pointer shadow-sm"
+            }`}
+            onClick={handleConfirm}
+            disabled={loading || !selectedDate || !selectedTime}
+          >
+            {loading ? "Reprogramando..." : "Confirmar Reprogramación"}
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -9,9 +9,11 @@ interface Doctor {
   telefono: string | null
   especialidad_id: string
   especialidad_nombre: string
+  email: string
   bio: string | null
   is_available: boolean
   created_at: string
+  usuario_id?: string
 }
 
 export default function AdminDoctors() {
@@ -41,8 +43,12 @@ export default function AdminDoctors() {
           bio,
           is_available,
           created_at,
+          usuario_id,
           especialidades (
             nombre
+          ),
+          usuarios (
+            email
           )
         `)
         .order('created_at', { ascending: false })
@@ -61,9 +67,11 @@ export default function AdminDoctors() {
         telefono: doc.telefono,
         especialidad_id: doc.especialidad_id,
         especialidad_nombre: doc.especialidades?.nombre || 'Sin especialidad',
+        email: doc.usuarios?.email || 'Sin cuenta',
         bio: doc.bio,
         is_available: doc.is_available,
-        created_at: doc.created_at
+        created_at: doc.created_at,
+        usuario_id: doc.usuario_id
       }))
 
       setDoctors(formattedDoctors)
@@ -106,6 +114,8 @@ export default function AdminDoctors() {
     if (!confirm('¿Estás seguro de que quieres eliminar este doctor?')) return
 
     try {
+      const doctor = doctors.find(d => d.id === doctorId)
+
       const { error } = await supabase
         .from('doctores')
         .delete()
@@ -114,6 +124,11 @@ export default function AdminDoctors() {
       if (error) {
         setError(`Error al eliminar doctor: ${error.message}`)
         return
+      }
+
+      // Si tiene usuario_id enlazado, borrar en la tabla usuarios de la app
+      if (doctor?.usuario_id) {
+        await supabase.from('usuarios').delete().eq('id', doctor.usuario_id)
       }
 
       setDoctors(doctors.filter(d => d.id !== doctorId))
@@ -188,6 +203,7 @@ export default function AdminDoctors() {
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Nombre</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Correo</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Especialidad</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Teléfono</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">DNI</th>
@@ -204,6 +220,9 @@ export default function AdminDoctors() {
                           {doctor.nombre} {doctor.apellido}
                         </div>
                         {doctor.bio && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{doctor.bio.substring(0, 50)}...</p>}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{doctor.email}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200">
