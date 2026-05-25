@@ -12,8 +12,8 @@ const MedicalHistory = () => {
 
   const loadHistory = async () => {
     try {
+      setLoading(true);
       const data = await getMedicalHistory();
-
       setHistory(data);
     } catch (error) {
       console.error(error);
@@ -22,235 +22,97 @@ const MedicalHistory = () => {
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeStyle = (type: string) => {
     switch (type.toLowerCase()) {
       case "consulta":
-        return "#dbeafe";
-
+        return "bg-blue-50 text-blue-700 border-blue-100";
       case "receta":
-        return "#ede9fe";
-
+        return "bg-purple-50 text-purple-700 border-purple-100";
       case "analisis":
-        return "#fee2e2";
-
+        return "bg-red-50 text-red-700 border-red-100";
       default:
-        return "#eceff5";
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   return (
-    <>
-      <style>{`
+    <div className="min-h-screen p-4 md:p-6 bg-gray-50/50">
+      <div className="max-w-7xl mx-auto">
+        {/* HEADER */}
+        <div className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-blue-900 tracking-tight">
+            Historia Clínica Digital
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Revisa tus recetas, diagnósticos y resultados de análisis médicos previos.
+          </p>
+        </div>
 
-        .history-container{
-          min-height:100vh;
-          background:#f3f5f9;
-          padding:30px;
-        }
-
-        .title{
-          font-size:44px;
-          font-weight:bold;
-          color:#17458f;
-          margin-bottom:40px;
-        }
-
-        .content{
-          display:grid;
-          grid-template-columns:
-            1fr 340px;
-          gap:30px;
-        }
-
-        .panel{
-          background:white;
-          border-radius:28px;
-          padding:30px;
-        }
-
-        .section-title{
-          font-size:30px;
-          font-weight:bold;
-          margin-bottom:30px;
-          display:flex;
-          align-items:center;
-          gap:14px;
-        }
-
-        .history-list{
-          display:flex;
-          flex-direction:column;
-          gap:22px;
-        }
-
-        .history-card{
-          background:#f9fafb;
-          border-radius:22px;
-          padding:22px;
-          display:flex;
-          justify-content:space-between;
-          gap:20px;
-        }
-
-        .date-box{
-          min-width:80px;
-          height:80px;
-          border-radius:18px;
-          background:white;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          font-weight:bold;
-        }
-
-        .month{
-          font-size:13px;
-          color:#666;
-        }
-
-        .day{
-          font-size:28px;
-          color:#17458f;
-        }
-
-        .card-content{
-          flex:1;
-        }
-
-        .type{
-          display:inline-block;
-          padding:7px 14px;
-          border-radius:999px;
-          font-size:12px;
-          font-weight:bold;
-          margin-bottom:12px;
-        }
-
-        .record-title{
-          font-size:28px;
-          font-weight:bold;
-          margin-bottom:10px;
-        }
-
-        .description{
-          color:#555;
-          line-height:1.6;
-        }
-
-        .pdf-btn{
-          border:none;
-          background:#17458f;
-          color:white;
-          padding:14px 20px;
-          border-radius:14px;
-          font-weight:bold;
-          cursor:pointer;
-          height:fit-content;
-          display:flex;
-          align-items:center;
-          gap:10px;
-        }
-
-        .empty-card{
-          background:white;
-          border-radius:24px;
-          padding:40px;
-          text-align:center;
-          color:#777;
-        }
-
-        .medications-box{
-          background:white;
-          border-radius:28px;
-          padding:30px;
-          margin-top:30px;
-        }
-
-        .medications-empty{
-          background:#f9fafb;
-          border-radius:18px;
-          padding:40px;
-          text-align:center;
-          color:#999;
-          margin-top:20px;
-        }
-
-        @media(max-width:900px){
-
-          .content{
-            grid-template-columns:1fr;
-          }
-
-          .history-card{
-            flex-direction:column;
-          }
-
-          .record-title{
-            font-size:22px;
-          }
-
-          .pdf-btn{
-            width:100%;
-            justify-content:center;
-          }
-        }
-      `}</style>
-
-      <div className="history-container">
-        <h1 className="title">Historia Clínica Digital</h1>
-
-        <div className="content">
-          {/* LEFT */}
-          <div>
-            <div className="panel">
-              <h2 className="section-title">
-                <History />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+            <p className="text-gray-500 mt-4 font-medium animate-pulse">Cargando historial clínico...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* LEFT COLUMN: HISTORY LIST */}
+            <div className="lg:col-span-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-50 flex items-center gap-2">
+                <History className="w-5 h-5 text-blue-900" />
                 Actividad Reciente
               </h2>
 
               {history.length === 0 ? (
-                <div className="empty-card">
-                  No hay documentos médicos disponibles.
+                <div className="text-center py-16 px-6 bg-white rounded-2xl border border-dashed border-gray-200 flex flex-col items-center justify-center shadow-sm">
+                  <FileTextIcon className="w-12 h-12 text-gray-300 mb-3" />
+                  <p className="text-gray-500 font-medium">No hay documentos médicos disponibles en tu historial.</p>
                 </div>
               ) : (
-                <div className="history-list">
+                <div className="flex flex-col gap-6">
                   {history.map((item) => {
                     const date = new Date(item.created_at);
-
-                    const month = date.toLocaleString("es-PE", {
-                      month: "short",
-                    });
-
+                    const month = date.toLocaleString("es-PE", { month: "short" });
                     const day = date.getDate();
 
                     return (
-                      <div key={item.id} className="history-card">
-                        <div className="date-box">
-                          <span className="month">{month.toUpperCase()}</span>
-
-                          <span className="day">{day}</span>
-                        </div>
-
-                        <div className="card-content">
-                          <div
-                            className="type"
-                            style={{
-                              background: getTypeColor(item.tipo),
-                            }}
-                          >
-                            {item.tipo}
+                      <div
+                        key={item.id}
+                        className="bg-gray-50/50 hover:bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col sm:flex-row justify-between gap-5 transition-all group"
+                      >
+                        {/* Date Box & Content */}
+                        <div className="flex gap-4 items-start">
+                          <div className="min-w-[65px] h-[65px] rounded-xl bg-white border border-gray-150 flex flex-col items-center justify-center shadow-sm shrink-0">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                              {month}
+                            </span>
+                            <span className="text-2xl font-extrabold text-blue-900 leading-none mt-1">
+                              {day}
+                            </span>
                           </div>
 
-                          <h3 className="record-title">{item.titulo}</h3>
-
-                          <p className="description">{item.descripcion}</p>
+                          <div>
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wider mb-2 ${getTypeStyle(item.tipo)}`}>
+                              {item.tipo}
+                            </span>
+                            <h3 className="text-lg font-bold text-gray-800 leading-snug group-hover:text-blue-900 transition-colors">
+                              {item.titulo}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+                              {item.descripcion}
+                            </p>
+                          </div>
                         </div>
 
+                        {/* PDF Link Button */}
                         {item.pdf_url && (
-                          <a href={item.pdf_url} target="_blank">
-                            <button className="pdf-btn">
-                              <FileTextIcon />
+                          <a
+                            href={item.pdf_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="self-end sm:self-center shrink-0"
+                          >
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
+                              <FileTextIcon className="w-4 h-4" />
                               PDF
                             </button>
                           </a>
@@ -262,21 +124,25 @@ const MedicalHistory = () => {
               )}
             </div>
 
-            {/* MEDICATIONS */}
-            <div className="medications-box">
-              <h2 className="section-title">
-                <Pill />
+            {/* RIGHT COLUMN: ACTIVE MEDICATIONS */}
+            <div className="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-50 flex items-center gap-2">
+                <Pill className="w-5 h-5 text-blue-900" />
                 Medicamentos Activos
               </h2>
 
-              <div className="medications-empty">
-                Próximamente podrás visualizar tus medicamentos activos.
+              <div className="text-center py-12 px-4 bg-gray-55/30 border border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2">
+                <Pill className="w-8 h-8 text-gray-300 animate-pulse" />
+                <p className="text-sm font-semibold text-gray-650">Próximamente</p>
+                <p className="text-xs text-gray-400 max-w-[200px] leading-relaxed">
+                  Podrás visualizar tus recetas vigentes e indicaciones de dosis recetadas por tus médicos.
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

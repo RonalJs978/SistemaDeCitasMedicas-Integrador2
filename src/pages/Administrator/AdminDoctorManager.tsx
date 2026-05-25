@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { doctorService } from '../../lib/doctor-service'
 
 interface Especialidad {
   id: string
@@ -73,10 +74,13 @@ export default function AdminDoctorManager() {
   }
   
 
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null)
+
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setSuccessMessage('')
+    setCreatedCredentials(null)
 
     if (!formData.nombre.trim()) {
       setError('El nombre es requerido')
@@ -93,39 +97,21 @@ export default function AdminDoctorManager() {
       return
     }
 
-
-
     setLoading(true)
 
     try {
-      // Insertar directamente en tabla doctores
-      const { data, error: insertError } = await supabase
-        .from('doctores')
-        .insert([
-          {
-            nombre: formData.nombre,
-            apellido: formData.apellido,
-            dni: formData.dni || null,
-            telefono: formData.telefono || null,
-            especialidad_id: formData.especialidad_id,
-            bio: formData.bio || null,
-            is_available: formData.is_available,
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select()
+      // Registrar al doctor llamando al servicio que crea su cuenta Auth
+      const res = await doctorService.createDoctor({
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        especialidadId: formData.especialidad_id,
+        bio: formData.bio,
+        isAvailable: formData.is_available,
+        dni: formData.dni,
+        telefono: formData.telefono
+      })
 
-      if (insertError) {
-        if (insertError.message.includes('unique')) {
-          setError('Este DNI ya está registrado')
-        } else {
-          setError(`Error: ${insertError.message}`)
-        }
-        console.error('Error al registrar doctor:', insertError)
-        return
-      }
-
-      console.log('Doctor registrado exitosamente:', data)
+      setCreatedCredentials(res.credentials)
       setSuccessMessage(`¡Doctor ${formData.nombre} ${formData.apellido} registrado correctamente!`)
       
       setFormData({
@@ -137,11 +123,12 @@ export default function AdminDoctorManager() {
         bio: '',
         is_available: false
       })
-      
-      // Limpiar mensaje de éxito después de 3 segundos
-      setTimeout(() => setSuccessMessage(''), 3000)
-    } catch (err) {
-      setError('Error al registrar el doctor. Por favor intenta nuevamente.')
+    } catch (err: any) {
+      if (err.message && err.message.includes('unique')) {
+        setError('Este DNI o Correo ya está registrado')
+      } else {
+        setError(err.message || 'Error al registrar el doctor. Por favor intenta nuevamente.')
+      }
       console.error(err)
     } finally {
       setLoading(false)
@@ -369,6 +356,61 @@ export default function AdminDoctorManager() {
           </div>
         </div>
       </div>
+
+      {createdCredentials && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-3xl">
+                ✓
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white">Doctor Registrado</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Se ha creado la cuenta de acceso para el médico.</p>
+            </div>
+
+            <div className="space-y-4 mb-6 text-left">
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Correo Institucional</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300 break-all">{createdCredentials.email}</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.email)
+                      alert('Correo copiado')
+                    }}
+                    className="text-xs text-blue-600 font-bold hover:underline"
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Contraseña Temporal</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300">{createdCredentials.password}</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.password)
+                      alert('Contraseña copiada')
+                    }}
+                    className="text-xs text-blue-600 font-bold hover:underline"
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setCreatedCredentials(null)}
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-lg shadow-blue-500/20"
+            >
+              Cerrar y Limpiar
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fade-in {

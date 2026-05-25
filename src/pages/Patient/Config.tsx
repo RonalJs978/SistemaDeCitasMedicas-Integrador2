@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { User, UserPen, Shield, Mail, Calendar } from "lucide-react";
 
 import {
@@ -19,6 +19,7 @@ const Config = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* =====================================
       CARGAR PERFIL
@@ -30,9 +31,7 @@ const Config = () => {
   const loadProfile = async () => {
     try {
       setLoading(true);
-
       const data = await getPatientProfile();
-
       setProfile(data);
     } catch (error) {
       console.error(error);
@@ -47,18 +46,20 @@ const Config = () => {
   const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
-
       if (!file) return;
 
+      setLoading(true);
       const imageUrl = await uploadPatientAvatar(file);
-
-      setProfile({
-        ...profile,
+      setProfile((prev: any) => ({
+        ...prev,
         foto_url: imageUrl,
-      });
+      }));
+      alert("Foto de perfil actualizada");
     } catch (error) {
       console.error(error);
       alert("Error al subir imagen");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,612 +69,324 @@ const Config = () => {
   const handleSave = async () => {
     try {
       setLoading(true);
-
       await updatePatientProfile(profile);
-
       alert("Perfil actualizado correctamente");
     } catch (error) {
       console.error(error);
-
       alert("Error al actualizar perfil");
     } finally {
       setLoading(false);
     }
   };
 
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
-    <>
-      <style>{`
+    <div className="min-h-screen p-4 md:p-6 bg-gray-50/50">
+      <div className="max-w-7xl mx-auto">
+        {/* HEADER */}
+        <div className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-blue-900 tracking-tight">
+            Notificaciones y Ajustes
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Administra tu información personal, preferencias de alertas y seguridad de tu cuenta.
+          </p>
+        </div>
 
-        .container{
-          padding:10px;
-          min-height:100vh;
-        }
-
-        .title{
-          color:#17458f;
-          font-size:40px;
-          margin-bottom:30px;
-          font-weight:bold;
-        }
-
-        .content{
-          display:flex;
-          gap:25px;
-        }
-
-        .left-section{
-          width:40%;
-          display:flex;
-          flex-direction:column;
-          gap:20px;
-        }
-
-        .right-section{
-          width:60%;
-          display:flex;
-          flex-direction:column;
-          gap:20px;
-        }
-
-        .card{
-          background:white;
-          border-radius:18px;
-          padding:25px;
-          box-shadow:0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .profile-header{
-          display:flex;
-          align-items:center;
-          gap:20px;
-          margin-bottom:30px;
-        }
-
-        .avatar-container{
-          position:relative;
-        }
-
-        .avatar{
-          width:100px;
-          height:100px;
-          border-radius:50%;
-          background:#e9eef8;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          overflow:hidden;
-          border:4px solid #f3f5f9;
-        }
-
-          .avatar-image{
-            width:100%;
-            height:100%;
-            object-fit:cover;
-          }
-
-          .default-user-icon{
-            font-size:42px;
-            color:#17458f;
-          }
-
-        .edit-btn{
-          position:absolute;
-          bottom:0;
-          right:0;
-          width:34px;
-          height:34px;
-          border:none;
-          border-radius:50%;
-          background:#17458f;
-          color:white;
-          cursor:pointer;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        }
-
-        .upload-input{
-          margin-top:12px;
-          width:100%;
-        }
-
-        .profile-name{
-          font-size:28px;
-          font-weight:bold;
-          margin-bottom:5px;
-        }
-
-        .profile-email{
-          color:gray;
-        }
-
-        .form-group{
-          margin-bottom:18px;
-        }
-
-        .form-group label{
-          display:block;
-          margin-bottom:8px;
-          font-size:12px;
-          font-weight:bold;
-          color:#666;
-          letter-spacing:1px;
-        }
-
-        .form-group input{
-          width:100%;
-          padding:15px;
-          border:none;
-          border-radius:10px;
-          background:#f3f5f9;
-          font-size:15px;
-          outline:none;
-        }
-
-        .change-password{
-          display:inline-block;
-          margin-top:10px;
-          color:#17458f;
-          font-weight:bold;
-          text-decoration:none;
-        }
-
-        .security-card{
-          background:#eef3fb;
-          border-radius:18px;
-          padding:20px;
-          display:flex;
-          gap:15px;
-          align-items:flex-start;
-        }
-
-        .security-icon{
-          color:#17458f;
-          font-size:24px;
-        }
-
-        .security-title{
-          color:#17458f;
-          margin-bottom:10px;
-        }
-
-        .security-text{
-          color:#555;
-          line-height:1.5;
-        }
-
-        .top-cards{
-          display:flex;
-          gap:20px;
-        }
-
-        .small-card{
-          flex:1;
-          background:white;
-          border-radius:18px;
-          padding:20px;
-          box-shadow:0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .card-top{
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          margin-bottom:25px;
-        }
-
-        .icon{
-          width:45px;
-          height:45px;
-          border-radius:12px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          font-size:20px;
-        }
-
-        .purple{
-          background:#f1e8ff;
-          color:#7c4dff;
-        }
-
-        .blue{
-          background:#e7f0ff;
-          color:#17458f;
-        }
-
-        .small-card h3{
-          margin-bottom:10px;
-        }
-
-        .small-card p{
-          color:#666;
-          line-height:1.5;
-          font-size:14px;
-        }
-
-        .preferences-card{
-          background:white;
-          border-radius:18px;
-          padding:30px;
-          box-shadow:0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .preferences-title{
-          margin-bottom:30px;
-          font-size:28px;
-          font-weight:bold;
-        }
-
-        .preference-item{
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          margin-bottom:30px;
-        }
-
-        .preference-item h4{
-          margin-bottom:6px;
-        }
-
-        .preference-item p{
-          color:#666;
-          font-size:14px;
-        }
-
-        .time-btn{
-          border:none;
-          background:#f1f3f7;
-          padding:12px 18px;
-          border-radius:10px;
-          font-weight:bold;
-        }
-
-        .actions{
-          display:flex;
-          justify-content:flex-end;
-          gap:15px;
-          margin-top:20px;
-        }
-
-        .cancel-btn{
-          border:none;
-          background:transparent;
-          color:#17458f;
-          font-weight:bold;
-          cursor:pointer;
-        }
-
-        .save-btn{
-          border:none;
-          background:#17458f;
-          color:white;
-          padding:15px 25px;
-          border-radius:10px;
-          font-weight:bold;
-          cursor:pointer;
-        }
-
-        .save-btn:hover{
-          opacity:0.9;
-        }
-
-        .switch{
-          position:relative;
-          display:inline-block;
-          width:50px;
-          height:26px;
-        }
-
-        .switch input{
-          opacity:0;
-          width:0;
-          height:0;
-        }
-
-        .slider{
-          position:absolute;
-          inset:0;
-          background:#d8d8d8;
-          border-radius:20px;
-          transition:0.3s;
-        }
-
-        .slider::before{
-          content:"";
-          position:absolute;
-          width:20px;
-          height:20px;
-          left:3px;
-          top:3px;
-          background:white;
-          border-radius:50%;
-          transition:0.3s;
-        }
-
-        .switch input:checked + .slider{
-          background:#17458f;
-        }
-
-        .switch input:checked + .slider::before{
-          transform:translateX(24px);
-        }
-
-        @media(max-width:1000px){
-          .content{
-            flex-direction:column;
-          }
-
-          .left-section,
-          .right-section{
-            width:100%;
-          }
-
-          .top-cards{
-            flex-direction:column;
-          }
-        }
-      `}</style>
-
-      <div className="container">
-        <h1 className="title">Notificaciones y Ajustes</h1>
-
-        <div className="content">
-          {/* LEFT */}
-          <div className="left-section">
-            <div className="card">
-              <div className="profile-header">
-                <div className="avatar-container">
-                  <div className="avatar">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT COLUMN: PROFILE CARD & SECURITY */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col gap-5">
+              {/* Profile Avatar Header */}
+              <div className="flex items-center gap-5 pb-5 border-b border-gray-100">
+                <div className="relative group cursor-pointer shrink-0" onClick={triggerFileSelect}>
+                  <div className="w-20 h-20 rounded-full bg-blue-50 border-4 border-gray-50 flex items-center justify-center overflow-hidden shadow-sm group-hover:opacity-95 transition-all">
                     {profile.foto_url ? (
                       <img
                         src={profile.foto_url}
                         alt="avatar"
-                        className="avatar-image"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <User className="default-user-icon" />
+                      <User className="w-9 h-9 text-blue-900/60" />
                     )}
                   </div>
 
-                  <button className="edit-btn">
-                    <UserPen />
-                  </button>
+                  <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center shadow shadow-blue-950/20 group-hover:scale-105 transition-transform">
+                    <UserPen className="w-4 h-4" />
+                  </div>
                 </div>
 
-                <div>
-                  <h2 className="profile-name">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold text-gray-800 truncate">
                     {profile.full_name || "Paciente"}
                   </h2>
-
-                  <p className="profile-email">{profile.email}</p>
+                  <p className="text-sm text-gray-400 truncate">{profile.email}</p>
                 </div>
               </div>
 
-              {/* FOTO */}
-              <div className="form-group">
-                <label>FOTO DE PERFIL</label>
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleUploadAvatar}
+              />
 
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="upload-input"
-                  onChange={handleUploadAvatar}
-                />
+              {/* FORM FIELDS */}
+              <div className="space-y-4">
+                {/* Nombre */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    Nombre Completo
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900/10 focus:border-blue-900 transition-all text-gray-700 font-medium text-sm"
+                    value={profile.full_name || ""}
+                    placeholder="Completa tu nombre"
+                    onChange={(e) =>
+                      setProfile({
+                        ...profile,
+                        full_name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Email (Disabled) */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-400 cursor-not-allowed font-medium text-sm"
+                    value={profile.email || ""}
+                    disabled
+                  />
+                </div>
+
+                {/* DNI */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    DNI / Documento
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900/10 focus:border-blue-900 transition-all text-gray-700 font-medium text-sm"
+                    value={profile.dni || ""}
+                    placeholder="Completa tu DNI"
+                    onChange={(e) =>
+                      setProfile({
+                        ...profile,
+                        dni: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Fecha Nacimiento */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    Fecha de Nacimiento
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900/10 focus:border-blue-900 transition-all text-gray-700 font-medium text-sm"
+                    value={profile.fecha_nac || ""}
+                    onChange={(e) =>
+                      setProfile({
+                        ...profile,
+                        fecha_nac: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Dirección */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    Dirección
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900/10 focus:border-blue-900 transition-all text-gray-700 font-medium text-sm"
+                    value={profile.direccion || ""}
+                    placeholder="Completa tu dirección"
+                    onChange={(e) =>
+                      setProfile({
+                        ...profile,
+                        direccion: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Alergias */}
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    Alergias Conocidas
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-900/10 focus:border-blue-900 transition-all text-gray-700 font-medium text-sm"
+                    value={profile.alergias || ""}
+                    placeholder="Ej. Ninguna, Penicilina, Mariscos"
+                    onChange={(e) =>
+                      setProfile({
+                        ...profile,
+                        alergias: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
 
-              {/* NOMBRE */}
-              <div className="form-group">
-                <label>NOMBRE COMPLETO</label>
-
-                <input
-                  type="text"
-                  value={profile.full_name || ""}
-                  placeholder="Falta completar"
-                  onChange={(e) =>
-                    setProfile({
-                      ...profile,
-                      full_name: e.target.value,
-                    })
-                  }
-                />
+              {/* Password link */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  className="text-sm font-bold text-blue-900 hover:text-blue-800 transition-colors"
+                  onClick={() => alert("Función próximamente disponible")}
+                >
+                  Cambiar contraseña
+                </button>
               </div>
-
-              {/* EMAIL */}
-              <div className="form-group">
-                <label>CORREO ELECTRÓNICO</label>
-
-                <input type="email" value={profile.email || ""} disabled />
-              </div>
-
-              {/* DNI */}
-              <div className="form-group">
-                <label>DNI</label>
-
-                <input
-                  type="text"
-                  value={profile.dni || ""}
-                  placeholder="Falta completar"
-                  onChange={(e) =>
-                    setProfile({
-                      ...profile,
-                      dni: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              {/* FECHA */}
-              <div className="form-group">
-                <label>FECHA DE NACIMIENTO</label>
-
-                <input
-                  type="date"
-                  value={profile.fecha_nac || ""}
-                  onChange={(e) =>
-                    setProfile({
-                      ...profile,
-                      fecha_nac: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              {/* DIRECCION */}
-              <div className="form-group">
-                <label>DIRECCIÓN</label>
-
-                <input
-                  type="text"
-                  value={profile.direccion || ""}
-                  placeholder="Falta completar"
-                  onChange={(e) =>
-                    setProfile({
-                      ...profile,
-                      direccion: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              {/* ALERGIAS */}
-              <div className="form-group">
-                <label>ALERGIAS</label>
-
-                <input
-                  type="text"
-                  value={profile.alergias || ""}
-                  placeholder="Falta completar"
-                  onChange={(e) =>
-                    setProfile({
-                      ...profile,
-                      alergias: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <a href="#" className="change-password">
-                Cambiar contraseña
-              </a>
             </div>
 
-            {/* SECURITY */}
-            <div className="security-card">
-              <div className="security-icon">
-                <Shield />
+            {/* SECURITY INFO */}
+            <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-900 shrink-0">
+                <Shield className="w-5 h-5" />
               </div>
-
               <div>
-                <h3 className="security-title">Tus datos están protegidos</h3>
-
-                <p className="security-text">
-                  AuraHealth utiliza cifrado de grado médico para asegurar que
-                  tu información personal y clínica permanezca confidencial bajo
-                  normativas HIPAA y GDPR.
+                <h3 className="text-sm font-bold text-blue-900 mb-1">Tus datos están protegidos</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  AuraHealth utiliza cifrado avanzado para asegurar que tu información personal y clínica permanezca estrictamente confidencial bajo normativas médicas vigentes.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="right-section">
-            <div className="top-cards">
-              <div className="small-card">
-                <div className="card-top">
-                  <div className="icon purple">
-                    <Calendar />
+          {/* RIGHT COLUMN: PREFERENCES */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+            {/* TOP DUAL CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Calendar card */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between gap-4">
+                <div className="flex justify-between items-center">
+                  <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                    <Calendar className="w-5 h-5" />
                   </div>
 
-                  <label className="switch">
-                    <input type="checkbox" defaultChecked />
-
-                    <span className="slider"></span>
+                  <label className="relative inline-flex items-center cursor-pointer group">
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
                   </label>
                 </div>
 
-                <h3>Añadir al Calendario</h3>
-
-                <p>
-                  Guardar las citas detalladamente y guardarlas en tu calendario
-                  preferido.
-                </p>
+                <div>
+                  <h3 className="text-base font-bold text-gray-800 mb-1">Añadir al Calendario</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Sincroniza y guarda automáticamente las citas médicas en tu calendario de preferencia (Google, Outlook, etc.).
+                  </p>
+                </div>
               </div>
 
-              <div className="small-card">
-                <div className="card-top">
-                  <div className="icon blue">
-                    <Mail />
+              {/* Email card */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between gap-4">
+                <div className="flex justify-between items-center">
+                  <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center">
+                    <Mail className="w-5 h-5" />
                   </div>
 
-                  <label className="switch">
-                    <input type="checkbox" defaultChecked />
-
-                    <span className="slider"></span>
+                  <label className="relative inline-flex items-center cursor-pointer group">
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
                   </label>
                 </div>
 
-                <h3>Email</h3>
-
-                <p>Resúmenes detallados, recetas y resultados médicos.</p>
+                <div>
+                  <h3 className="text-base font-bold text-gray-800 mb-1">Email Informativo</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Recibe recordatorios de cita, recetas y boletines mensuales de salud en tu correo electrónico principal.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* PREFERENCES */}
-            <div className="preferences-card">
-              <h2 className="preferences-title">Preferencias de Frecuencia</h2>
+            {/* PREFERENCES LIST */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-50">
+                Preferencias de Frecuencia
+              </h2>
 
-              <div className="preference-item">
-                <div>
-                  <h4>Recordatorios de Cita</h4>
-
-                  <p>¿Con cuánta antelación deseas ser avisado?</p>
+              <div className="space-y-6">
+                {/* Reminders time */}
+                <div className="flex justify-between items-center gap-4">
+                  <div className="max-w-[70%]">
+                    <h4 className="text-sm font-bold text-gray-700 mb-1">Recordatorios de Cita</h4>
+                    <p className="text-xs text-gray-400 leading-relaxed">¿Con cuánta anticipación deseas ser avisado de tu cita?</p>
+                  </div>
+                  <button className="px-4 py-2.5 bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-xl text-xs font-bold text-gray-700 transition-all cursor-pointer">
+                    24 horas antes
+                  </button>
                 </div>
 
-                <button className="time-btn">24 horas antes</button>
-              </div>
+                {/* Prescription expiry */}
+                <div className="flex justify-between items-center gap-4 pt-4 border-t border-gray-100">
+                  <div className="max-w-[70%]">
+                    <h4 className="text-sm font-bold text-gray-700 mb-1">Vencimiento de Recetas</h4>
+                    <p className="text-xs text-gray-400 leading-relaxed">Alertas de renovación cuando tus tratamientos estén por vencer.</p>
+                  </div>
 
-              <div className="preference-item">
-                <div>
-                  <h4>Vencimiento de Recetas</h4>
-
-                  <p>Alertas cuando tus medicamentos necesiten renovación.</p>
+                  <label className="relative inline-flex items-center cursor-pointer group shrink-0">
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
+                  </label>
                 </div>
 
-                <label className="switch">
-                  <input type="checkbox" defaultChecked />
+                {/* Wellness Content */}
+                <div className="flex justify-between items-center gap-4 pt-4 border-t border-gray-100">
+                  <div className="max-w-[70%]">
+                    <h4 className="text-sm font-bold text-gray-700 mb-1">Contenido de Bienestar</h4>
+                    <p className="text-xs text-gray-400 leading-relaxed">Artículos de prevención, tips de nutrición y boletines médicos.</p>
+                  </div>
 
-                  <span className="slider"></span>
-                </label>
-              </div>
-
-              <div className="preference-item">
-                <div>
-                  <h4>Contenido de Bienestar</h4>
-
-                  <p>Tips de salud y boletines mensuales.</p>
+                  <label className="relative inline-flex items-center cursor-pointer group shrink-0">
+                    <input type="checkbox" className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-900"></div>
+                  </label>
                 </div>
-
-                <label className="switch">
-                  <input type="checkbox" />
-
-                  <span className="slider"></span>
-                </label>
               </div>
             </div>
-            {/* BOTONES */}
-            <div className="actions">
-              <button className="cancel-btn">Cancelar</button>
 
-              <button className="save-btn" onClick={handleSave}>
+            {/* ACTION BUTTONS */}
+            <div className="flex justify-end items-center gap-4 mt-2">
+              <button
+                className="px-5 py-3 rounded-xl font-bold text-sm text-gray-500 hover:text-gray-750 transition-colors cursor-pointer"
+                onClick={loadProfile}
+              >
+                Cancelar
+              </button>
+
+              <button
+                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-blue-900 hover:bg-blue-800 text-white shadow-blue-900/10`}
+                onClick={handleSave}
+                disabled={loading}
+              >
                 {loading ? "Guardando..." : "Guardar Cambios"}
               </button>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

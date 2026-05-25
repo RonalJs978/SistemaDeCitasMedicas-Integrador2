@@ -1,10 +1,26 @@
+import { createClient } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+
+// Cliente temporal sin persistencia de sesión para evitar que el Administrador sea deslogueado
+const authClient = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+})
+
 export interface CreateDoctorData {
-  fullName: string
+  nombre: string
+  apellido: string
   especialidadId: string
   bio: string
   isAvailable: boolean
+  dni?: string
+  telefono?: string
 }
 
 export interface DoctorCredentials {
@@ -12,8 +28,8 @@ export interface DoctorCredentials {
   password: string
 }
 
-export const generateEmail = (fullName: string): string => {
-  const sanitized = fullName
+export const generateEmail = (nombre: string, apellido: string): string => {
+  const sanitized = `${nombre}.${apellido}`
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '.')
@@ -32,45 +48,52 @@ export const generatePassword = (): string => {
 
 export const doctorService = {
   async createDoctor(data: CreateDoctorData): Promise<{ credentials: DoctorCredentials }> {
-    const generatedEmail = generateEmail(data.fullName)
+    const fullName = `${data.nombre} ${data.apellido}`
+    const generatedEmail = generateEmail(data.nombre, data.apellido)
     const generatedPassword = generatePassword()
 
-    // 1. Crear usuario en Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 1. Crear usuario en Supabase Auth usando el cliente temporal sessionless
+    const { data: authData, error: authError } = await authClient.auth.signUp({
       email: generatedEmail,
       password: generatedPassword,
       options: {
         data: {
-          full_name: data.fullName,
+          full_name: fullName,
           user_role: 'doctor'
         }
       }
     })
 
-    if (authError) throw new Error(`Error al crear usuario: ${authError.message}`)
-    if (!authData.user?.id) throw new Error('Error: No se obtuvo el ID del usuario')
+    if (authError) throw new Error(`Error al crear usuario en Auth: ${authError.message}`)
+    if (!authData.user?.id) throw new Error('Error: No se obtuvo el ID del usuario de Auth')
 
-    // 2. Crear en tabla usuarios
+    // 2. Crear en tabla usuarios (public)
     const { error: usuariosError } = await supabase
       .from('usuarios')
       .upsert([
         {
           id: authData.user.id,
           email: generatedEmail,
-          full_name: data.fullName,
-          user_role: 'doctor'
+          full_name: fullName,
+          user_role: 'doctor',
+          is_active: true
         }
       ], { onConflict: 'id' })
 
     if (usuariosError) throw new Error(`Error al registrar en usuarios: ${usuariosError.message}`)
 
-    // 3. Crear en tabla doctores
+    // 3. Crear en tabla doctores (public) con el usuario_id enlazado
     const { error: doctoresError } = await supabase
       .from('doctores')
       .insert([
         {
+          id: authData.user.id, // Para mantener consistencia o usarlo como ID
           usuario_id: authData.user.id,
           especialidad_id: data.especialidadId,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          dni: data.dni || null,
+          telefono: data.telefono || null,
           bio: data.bio || null,
           is_available: data.isAvailable
         }
@@ -100,6 +123,3 @@ export const doctorService = {
     return data?.email || null
   }
 }
-
-
-
