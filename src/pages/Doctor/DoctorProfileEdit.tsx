@@ -92,7 +92,7 @@ const DoctorProfileEdit = () => {
         bio: docData.bio || "Especialista con más de 12 años de experiencia en cardiología intervencionista. Formado en el Instituto Nacional de Cardiología, con enfoque en medicina preventiva y salud cardiovascular integral.",
         telefono: docData.telefono || "+34 612 345 678",
         direccion: docData.direccion || "Av. San Martín 450, Torre Médica Aura, Consultorio 402",
-        foto_url: docData.foto_url || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=256&h=256&q=80",
+        foto_url: docData.foto_url || "",
         email: userData?.email || user.email || "julian.rivera@aurahealth.com",
       });
     } catch (error) {
